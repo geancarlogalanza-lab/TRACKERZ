@@ -20,6 +20,8 @@
   --danger-soft: #fdecea;
   --warn: #9a6100;
   --warn-soft: #fdf1dc;
+  --ok: #2f7d4f;
+  --track: #dfe3ea;
 
   --radius-sm: 7px;
   --radius: 11px;
@@ -51,6 +53,8 @@
     --danger-soft: #3a211f;
     --warn: #e5b168;
     --warn-soft: #362a17;
+    --ok: #7fc99a;
+    --track: #323945;
 
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
     --shadow: 0 2px 10px rgb(0 0 0 / 0.35);
@@ -632,14 +636,24 @@ button, input, textarea, select { font: inherit; color: inherit; }
 
 /* ==========================================================================
    Streak tracker
+   Four zones: Today (always on screen), the calendar, a past day's details,
+   and the row. Continuing a streak is the only thing that animates, and it
+   shows in exactly two places: the row and today's cell.
    ========================================================================== */
 
+/* Desktop: calendar left; Today at the top of the right column, the
+   selected day beneath it. Mobile: Today, then calendar, then details. */
 .streak-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
   gap: 20px;
   align-items: start;
 }
+.streak-layout__calendar { grid-column: 1; grid-row: 1 / span 2; }
+.streak-layout__today { grid-column: 2; grid-row: 1; }
+.streak-layout__details { grid-column: 2; grid-row: 2; }
+
+/* --- Calendar ------------------------------------------------------------ */
 
 .calendar {
   background: var(--surface);
@@ -674,107 +688,226 @@ button, input, textarea, select { font: inherit; color: inherit; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 5px;
   border: 1px solid transparent;
   border-radius: var(--radius);
   background: transparent;
   color: var(--text);
   font-size: 14px;
   cursor: pointer;
-  transition: background 0.12s, border-color 0.12s;
+  transition: background 0.14s, border-color 0.14s;
 }
-/* Hover must not out-specify the selected day, or its label washes out. */
-.day:not(.day--selected):hover { background: var(--surface-sunken); }
+.day:disabled { cursor: default; }
+.day:not(:disabled):not(.day--selected):hover { background: var(--surface-sunken); }
 .day--outside { color: var(--text-faint); opacity: 0.55; }
+.day--future { color: var(--text-faint); opacity: 0.5; }
 .day--today { font-weight: 700; color: var(--accent); }
-.day--selected,
-.day--selected:hover {
+.day--today.day--selected { background: var(--accent-soft); }
+.day--selected:not(.day--today),
+.day--selected:not(.day--today):hover {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
 }
-.day--selected.day--today { color: #fff; }
 @media (prefers-color-scheme: dark) {
-  .day--selected, .day--selected.day--today { color: #10141d; }
+  .day--selected:not(.day--today), .day--selected:not(.day--today):hover { color: #10141d; }
 }
 
-.day__dots { display: flex; gap: 3px; height: 5px; align-items: center; }
-.day__dot {
-  width: 5px; height: 5px;
-  border-radius: 50%;
+/* One mark per day. Track length = streaks that existed; fill = continued.
+   A missed day is an empty track. Nothing is ever red. */
+.day__track { display: flex; gap: 2px; height: 3px; width: 22px; }
+.day__seg {
+  flex: 1;
+  min-width: 2px;
+  border-radius: 2px;
+  background: var(--track);
+  position: relative;
+  overflow: hidden;
+}
+.day__seg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 2px;
   background: var(--accent);
+  opacity: 0.72;
+  transform: scaleX(0);
+  transform-origin: left;
 }
-.day--selected .day__dot { background: currentColor; }
-.day__more { font-size: 9px; line-height: 1; color: var(--text-faint); }
-.day--selected .day__more { color: currentColor; }
+.day__seg--on::after { transform: scaleX(1); }
+/* A complete day fills a shade stronger — the calendar's one earned reward. */
+.day--full .day__seg::after,
+.day--today .day__seg::after { opacity: 1; }
+.day--selected:not(.day--today) .day__seg { background: rgb(255 255 255 / 0.32); }
+.day--selected:not(.day--today) .day__seg::after { background: currentColor; opacity: 1; }
+/* Only today's bar is in progress, so only today's bar moves. */
+.day--today .day__seg::after { transition: transform 0.26s cubic-bezier(0.2, 0.7, 0.2, 1) 0.18s; }
 
-/* Selected-day panel */
-.day-panel {
+/* The last streak was just secured: one ring, then rest. */
+.day--pulse::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: var(--radius);
+  box-shadow: 0 0 0 2px var(--accent);
+  opacity: 0;
+  pointer-events: none;
+  animation: day-pulse 0.55s ease-out 0.5s 1 forwards;
+}
+@keyframes day-pulse {
+  0% { opacity: 0.55; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.22); }
+}
+
+/* --- Panels (Today, and a past day's details) ---------------------------- */
+
+.spanel {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  padding: 18px;
+  padding: 16px 12px 8px;
 }
-.day-panel__header {
+.spanel__head {
   display: flex;
   align-items: baseline;
   gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 4px;
+  padding: 0 6px;
+  margin-bottom: 8px;
 }
-.day-panel__date { font-size: 16px; font-weight: 650; }
-.day-panel__relative { font-size: 13px; color: var(--text-faint); }
-.day-panel__list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
-
-.streak-card {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 13px 14px;
-  background: var(--surface);
+.spanel__title { flex: 1; font-size: 16px; font-weight: 650; min-width: 0; }
+.spanel__status {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  animation: fade-in 0.2s ease-out;
 }
-.streak-card--done { background: var(--surface-sunken); border-color: transparent; }
+.spanel__status--secured { color: var(--ok); font-weight: 600; }
+.spanel__close { align-self: center; margin: -6px -6px -6px 0; }
+.spanel__rows { display: flex; flex-direction: column; }
+.spanel__foot { padding: 6px 2px 2px; }
+.spanel__empty { padding: 6px 6px 12px; color: var(--text-faint); font-size: 14px; }
+.spanel .empty { border: none; background: transparent; padding: 24px 8px 20px; }
 
-.streak-card__top {
-  display: flex;
+/* --- Row ------------------------------------------------------------------ */
+
+.srow {
+  position: relative;
+  display: grid;
+  grid-template-columns: 22px minmax(72px, 1fr) auto;
+  grid-template-areas:
+    "mark name side"
+    ". note note"
+    ". error error";
+  column-gap: 12px;
+  row-gap: 4px;
   align-items: center;
-  gap: 10px;
+  padding: 11px 8px;
+  border-top: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: background 0.3s 0.1s;
 }
-.streak-card__name {
-  flex: 1;
-  min-width: 0;
+.srow:first-child { border-top-color: transparent; }
+.srow--done { background: var(--surface-sunken); border-top-color: transparent; }
+.srow--done + .srow { border-top-color: transparent; }
+.srow--missed { opacity: 0.8; }
+
+/* State mark: hollow (owed), filled check (done), dash (restart / missed). */
+.srow__mark {
+  grid-area: mark;
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.8px solid var(--border-strong);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  transition: background 0.2s, border-color 0.2s;
+}
+@media (prefers-color-scheme: dark) { .srow__mark { color: #10141d; } }
+.srow__mark svg { transform: scale(0); transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1) 0.06s; }
+.srow__mark--done { background: var(--accent); border-color: var(--accent); }
+.srow__mark--done svg { transform: scale(1); }
+.srow__mark--restart::after,
+.srow__mark--missed::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 1.8px;
+  border-radius: 1px;
+  background: var(--text-faint);
+}
+
+.srow__name {
+  grid-area: name;
   font-weight: 600;
+  font-size: 14.5px;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
-.flame {
-  display: inline-flex;
+.srow__side {
+  grid-area: side;
+  display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 12.5px;
-  font-weight: 600;
-  padding: 2px 9px;
-  border-radius: 20px;
-  background: var(--surface-sunken);
-  color: var(--text-muted);
-  white-space: nowrap;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px 10px;
 }
-.streak-card--done .flame { background: var(--accent-soft); color: var(--accent); }
-.flame--none { color: var(--text-faint); }
 
-.streak-card__note {
-  margin-top: 9px;
-  font-size: 14px;
-  color: var(--text);
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
+/* The count is the largest type in the row. It is the reward. */
+.srow__count { display: inline-flex; align-items: baseline; gap: 5px; font-variant-numeric: tabular-nums; }
+.srow__count .num { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+.srow__unit { font-size: 12px; color: var(--text-muted); }
+.srow__count--last { color: var(--text-muted); }
+.srow__count--last .num { font-size: 15px; font-weight: 600; }
+.srow__count-label { font-size: 12px; color: var(--text-faint); margin-right: 2px; }
+.srow__quiet { font-size: 13px; color: var(--text-faint); }
+.srow__error { grid-area: error; margin: 0; font-size: 13px; color: var(--danger); }
+
+.srow__note { grid-area: note; min-width: 0; }
+.srow__note-form { display: flex; gap: 6px; align-items: center; }
+.srow__note-form .input { min-height: 34px; padding: 5px 10px; font-size: 13.5px; }
+.srow__note-view { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.srow__note-text { font-size: 13.5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.srow__note-text--empty { color: var(--text-faint); font-style: italic; }
+.srow__note-edit {
+  flex: none;
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 12.5px;
+  color: var(--text-faint);
+  cursor: pointer;
 }
-.streak-card__note--empty { color: var(--text-faint); font-style: italic; }
-.streak-card__actions { display: flex; gap: 6px; margin-top: 10px; }
-.streak-card__form { display: flex; gap: 8px; margin-top: 10px; }
-.streak-card__form .input { min-height: 40px; }
+.srow__note-edit:hover { color: var(--text); }
+
+/* A milestone: the count lingers a beat and the row gets one light sweep. */
+.srow--celebrate::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 14%, transparent), transparent);
+  transform: translateX(-100%);
+  animation: srow-sweep 0.6s ease-out 0.2s 1 forwards;
+  pointer-events: none;
+}
+@keyframes srow-sweep { to { transform: translateX(100%); } }
+
+/* --- Rolling number ------------------------------------------------------- */
+
+.num { display: inline-block; height: 1em; overflow: hidden; vertical-align: bottom; line-height: 1; }
+.num__in { display: flex; flex-direction: column; line-height: 1; }
+.num__in > span { display: block; height: 1em; }
+.num__in--up { animation: num-up 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) 0.12s both; }
+.num__in--down { animation: num-down 0.2s ease-out both; }
+.num__in--long { animation-duration: 0.48s; }
+@keyframes num-up { from { transform: translateY(0); } to { transform: translateY(-1em); } }
+@keyframes num-down { from { transform: translateY(-1em); } to { transform: translateY(0); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 
 /* ==========================================================================
    Auth screen
@@ -838,7 +971,10 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .mobile-action { display: none; }
 
 @media (max-width: 860px) {
-  .streak-layout { grid-template-columns: 1fr; }
+  .streak-layout { display: flex; flex-direction: column; }
+  .streak-layout__today { order: 1; }
+  .streak-layout__calendar { order: 2; }
+  .streak-layout__details { order: 3; }
 }
 
 @media (max-width: 700px) {
@@ -867,6 +1003,8 @@ button, input, textarea, select { font: inherit; color: inherit; }
 
   .day { min-height: 40px; font-size: 13.5px; }
   .calendar { padding: 12px; }
+  .srow__count-label { display: none; }
+  .srow { padding-left: 4px; padding-right: 4px; column-gap: 10px; }
 
   /* The primary action follows the thumb to the bottom of the screen. */
   .desktop-action { display: none; }

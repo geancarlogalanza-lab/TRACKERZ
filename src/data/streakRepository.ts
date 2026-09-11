@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { today } from '../lib/dates'
 import type { ISODate, Streak, StreakRecord } from './types'
 
 /** All database access for the Streak tracker. */
@@ -41,8 +42,12 @@ export async function listRecords(): Promise<StreakRecord[]> {
 }
 
 /**
- * Marks a streak continued on a date. The note is stored verbatim and is never
- * inspected — continuation is recorded because the user asked for it, full stop.
+ * Marks a streak continued on `entryDate`, which must be today. A streak is
+ * continued on the day it happens — never back-filled, never done ahead —
+ * and the database enforces the same rule behind this check.
+ *
+ * The note is stored verbatim and is never inspected; continuation is
+ * recorded because the user asked for it, full stop.
  */
 export async function continueStreak(
   userId: string,
@@ -50,19 +55,45 @@ export async function continueStreak(
   entryDate: ISODate,
   note: string,
 ): Promise<StreakRecord> {
+  if (entryDate !== today()) {
+    throw new Error('A streak can only be continued today.')
+  }
+
+  const inserted = await supabase
+    .from('streak_records')
+    .insert({ user_id: userId, streak_id: streakId, entry_date: entryDate, note: note.trim() })
+    .select()
+    .single()
+
+  // Already continued today (a double tap, or a second device): that record
+  // is the truth, and there is nothing further to do.
+  if (inserted.error && (inserted.error as { code?: string }).code === '23505') {
+    return unwrap(
+      await supabase
+        .from('streak_records')
+        .select('*')
+        .eq('streak_id', streakId)
+        .eq('entry_date', entryDate)
+        .single(),
+    )
+  }
+
+  return unwrap(inserted)
+}
+
+/** Changes what a record says. Allowed on any day; the note never affects counting. */
+export async function updateNote(id: string, note: string): Promise<StreakRecord> {
   return unwrap(
     await supabase
       .from('streak_records')
-      .upsert(
-        { user_id: userId, streak_id: streakId, entry_date: entryDate, note: note.trim() },
-        { onConflict: 'streak_id,entry_date' },
-      )
+      .update({ note: note.trim() })
+      .eq('id', id)
       .select()
       .single(),
   )
 }
 
-/** Undoes a continuation for one day, leaving the rest of the history intact. */
+/** Undoes today's continuation. The caller checks the date; the database does too. */
 export async function removeRecord(id: string): Promise<void> {
   const { error } = await supabase.from('streak_records').delete().eq('id', id)
   if (error) throw error

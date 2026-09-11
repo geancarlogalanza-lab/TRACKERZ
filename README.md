@@ -18,10 +18,16 @@ work on it, and when it is due. Anything overdue or landing today is pulled to
 a short list at the top. Completing a task removes it; the subject stays until
 you delete it yourself.
 
-**Streaks** — a month calendar. Pick a day, create a streak or continue one you
-already have, and write whatever you like about that day. The text is stored as
-written and never read by the app: a streak counts consecutive days you chose
-to continue it, nothing more.
+**Streaks** — a Today panel and a month calendar. Continue a streak with one tap,
+then write whatever you like about the day if you want to. The text is stored
+as written and never read by the app: a streak counts consecutive days you
+chose to continue it, nothing more. A streak is continued on the day it
+happens — a missed day can't be filled in later, and a streak that ends says
+"Last streak 8 days · Start again" rather than anything harsher.
+
+Each calendar day carries one mark: a short bar whose length is how many
+streaks existed that day and whose fill is how many were continued. A missed
+day is an empty bar, never a colour.
 
 ## Stack
 
@@ -99,10 +105,16 @@ User
        └── Streak record  (one per day, free-text note)
 ```
 
-Every table has a `user_id` and a single RLS policy of the form
+Every table has a `user_id` and RLS policies of the form
 `auth.uid() = user_id`, so one account can only ever reach its own rows.
 Deletes cascade: removing a subject removes its tasks, removing a streak
 removes its records.
+
+Streak records carry one more rule: a continuation can only be inserted or
+deleted for the current day (with a one-day tolerance for timezones), and a
+trigger stops a record's date being changed after the fact. The client
+enforces "today" exactly; the database makes sure a direct API call can't
+back-fill a missed day either.
 
 ## Deploying to GitHub Pages
 

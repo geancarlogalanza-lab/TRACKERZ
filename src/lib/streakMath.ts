@@ -1,5 +1,5 @@
-import type { ISODate, StreakRecord } from '../data/types'
-import { addDays } from './dates'
+import type { ISODate, Streak, StreakRecord } from '../data/types'
+import { addDays, toISODate } from './dates'
 
 /**
  * Streak counting.
@@ -11,19 +11,6 @@ import { addDays } from './dates'
  * records for entirely different activities. There is no matching, scoring,
  * threshold, or judgement of any kind.
  */
-
-export type StreakStatus =
-  /** Continued on the day in question. */
-  | 'active'
-  /** Run is intact up to the previous day, but this day has no record yet. */
-  | 'awaiting'
-  /** No run leading into this day. */
-  | 'inactive'
-
-export interface StreakProgress {
-  length: number
-  status: StreakStatus
-}
 
 /** Dates that have a record, for one streak. */
 export function datesForStreak(records: StreakRecord[], streakId: string): Set<ISODate> {
@@ -45,17 +32,58 @@ export function runEndingOn(dates: Set<ISODate>, day: ISODate): number {
   return length
 }
 
+/** The most recent run that ended strictly before `day`, if any. */
+export function lastRunBefore(dates: Set<ISODate>, day: ISODate): number {
+  let latest: ISODate | null = null
+  for (const date of dates) {
+    if (date < day && (latest === null || date > latest)) latest = date
+  }
+  return latest === null ? 0 : runEndingOn(dates, latest)
+}
+
 /**
- * How the streak stands on a given day. A run that reaches yesterday but not
- * today is `awaiting`, not broken — today is not over yet, and the app does
- * not punish an unfinished day.
+ * The first day a streak counts from: whichever is earlier, the day it was
+ * created or its earliest record. Days before this are not "missed" — the
+ * streak simply didn't exist yet.
  */
-export function progressAsOf(dates: Set<ISODate>, day: ISODate): StreakProgress {
-  const onDay = runEndingOn(dates, day)
-  if (onDay > 0) return { length: onDay, status: 'active' }
+export function firstDay(streak: Streak, dates: Set<ISODate>): ISODate {
+  let first = toISODate(new Date(streak.created_at))
+  for (const date of dates) {
+    if (date < first) first = date
+  }
+  return first
+}
 
-  const beforeDay = runEndingOn(dates, addDays(day, -1))
-  if (beforeDay > 0) return { length: beforeDay, status: 'awaiting' }
+export type TodayState =
+  /** Continued today. */
+  | 'done'
+  /** Run is intact through yesterday; today is still owed. */
+  | 'needs'
+  /** No run leading into today. Start again, or start for the first time. */
+  | 'restart'
 
-  return { length: 0, status: 'inactive' }
+export interface TodayStanding {
+  state: TodayState
+  /** The run to show: through today when done, through yesterday when owed, the last run when restarting. */
+  count: number
+}
+
+/** Where a streak stands on `day`, phrased for the Today panel. */
+export function standingOn(dates: Set<ISODate>, day: ISODate): TodayStanding {
+  const throughToday = runEndingOn(dates, day)
+  if (throughToday > 0) return { state: 'done', count: throughToday }
+
+  const throughYesterday = runEndingOn(dates, addDays(day, -1))
+  if (throughYesterday > 0) return { state: 'needs', count: throughYesterday }
+
+  return { state: 'restart', count: lastRunBefore(dates, day) }
+}
+
+/**
+ * Milestones get a slightly longer beat in the count animation and nothing
+ * else — no badge, no message. A week, a month, a hundred, each year.
+ */
+export function isMilestone(count: number): boolean {
+  if (count === 7 || count === 30 || count === 100) return true
+  return count > 0 && count % 365 === 0
 }
