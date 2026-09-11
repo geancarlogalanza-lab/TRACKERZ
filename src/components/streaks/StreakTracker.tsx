@@ -3,11 +3,18 @@ import { Button } from '../ui/Button'
 import { PlusIcon } from '../ui/Icons'
 import { ConfirmDialog, ErrorNotice, Loading } from '../ui/Feedback'
 import { PromptDialog } from '../ui/PromptDialog'
-import { Calendar, type DayStats } from './Calendar'
+import { Calendar, type DaySegment } from './Calendar'
 import { DayDetails } from './DayDetails'
 import { TodayPanel } from './TodayPanel'
 import { today as todayISO } from '../../lib/dates'
-import { datesForStreak, firstDay, isMilestone, standingOn } from '../../lib/streakMath'
+import {
+  activeRunOn,
+  datesForStreak,
+  firstDay,
+  isMilestone,
+  segmentState,
+  standingOn,
+} from '../../lib/streakMath'
 import type { useStreakTracker } from '../../hooks/useStreakTracker'
 import type { ISODate, Streak, StreakRecord } from '../../data/types'
 
@@ -35,6 +42,7 @@ export function StreakTracker({ store }: { store: ReturnType<typeof useStreakTra
   const [celebrating, setCelebrating] = useState<string | null>(null)
   const [justContinued, setJustContinued] = useState<string | null>(null)
   const [pulse, setPulse] = useState(false)
+  const [focusStreakId, setFocusStreakId] = useState<string | null>(null)
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
   const close = () => setDialog(null)
 
@@ -76,19 +84,33 @@ export function StreakTracker({ store }: { store: ReturnType<typeof useStreakTra
   const recordsToday = useMemo(() => recordsOn(today), [recordsOn, today])
   const recordsOnSelected = useMemo(() => recordsOn(selected), [recordsOn, selected])
 
-  /** The calendar's one number per day: how many streaks existed, how many were continued. */
-  const statsFor = useCallback(
-    (day: ISODate): DayStats => {
-      let existed = 0
-      let done = 0
+  /** The live run for each streak, so a segment can tell active from ended. */
+  const activeRuns = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof activeRunOn>>()
+    for (const streak of streaks) {
+      map.set(streak.id, activeRunOn(datesByStreak.get(streak.id) ?? new Set(), today))
+    }
+    return map
+  }, [streaks, datesByStreak, today])
+
+  /**
+   * The calendar's one mark per day: a segment for each streak that existed,
+   * in creation order so each streak keeps its position across the month.
+   */
+  const segmentsFor = useCallback(
+    (day: ISODate): DaySegment[] => {
+      const segments: DaySegment[] = []
       for (const streak of streaks) {
         if ((firstDayByStreak.get(streak.id) ?? day) > day) continue
-        existed += 1
-        if (datesByStreak.get(streak.id)?.has(day)) done += 1
+        const dates = datesByStreak.get(streak.id) ?? new Set<ISODate>()
+        segments.push({
+          streakId: streak.id,
+          state: segmentState(dates, activeRuns.get(streak.id) ?? null, day),
+        })
       }
-      return { existed, done }
+      return segments
     },
-    [streaks, firstDayByStreak, datesByStreak],
+    [streaks, firstDayByStreak, datesByStreak, activeRuns],
   )
 
   const later = (fn: () => void, ms: number) => {
@@ -134,6 +156,8 @@ export function StreakTracker({ store }: { store: ReturnType<typeof useStreakTra
             recordsToday={recordsToday}
             celebrating={celebrating}
             justContinued={justContinued}
+            focusStreakId={focusStreakId}
+            onFocusStreak={setFocusStreakId}
             onContinue={handleContinue}
             onUndo={store.undoToday}
             onSaveNote={store.saveNote}
@@ -149,7 +173,8 @@ export function StreakTracker({ store }: { store: ReturnType<typeof useStreakTra
             month={view.month}
             today={today}
             selected={selected}
-            statsFor={statsFor}
+            segmentsFor={segmentsFor}
+            focusStreakId={focusStreakId}
             pulseToday={pulse}
             onSelect={selectDay}
             onMonthChange={(year, month) => setView({ year, month })}

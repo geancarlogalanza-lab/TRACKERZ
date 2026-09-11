@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { AuthScreen } from './components/AuthScreen'
 import { PendingTracker } from './components/pending/PendingTracker'
+import { Fireplace } from './components/streaks/Fireplace'
 import { StreakTracker } from './components/streaks/StreakTracker'
 import { Button } from './components/ui/Button'
 import { ErrorNotice, Loading, Toast } from './components/ui/Feedback'
@@ -16,6 +17,13 @@ export default function App() {
   const { user, loading } = useAuth()
   const [tab, setTab] = useState<Tab>('pending')
   const toast = useToast()
+
+  // The fireplace belongs to the Streak tracker alone. The page only dresses
+  // for it once WebGL has actually come up, so a machine without it keeps the
+  // ordinary ground rather than a bare black one.
+  const [hearth, setHearth] = useState(false)
+  const onHearthReady = useCallback((ok: boolean) => setHearth(ok), [])
+  const showHearth = tab === 'streaks'
 
   // Hooks run unconditionally; they stay idle until there is a signed-in user.
   const pending = usePendingTracker(user?.id ?? null, toast.show)
@@ -39,7 +47,8 @@ export default function App() {
   if (!user) return <AuthScreen />
 
   return (
-    <div className="app">
+    <div className={`app${showHearth && hearth ? ' app--hearth' : ''}`}>
+      {showHearth && <Fireplace onReady={onHearthReady} />}
       <header className="header">
         <div className="header__brand">
           <span className="header__mark" aria-hidden="true" />

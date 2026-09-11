@@ -22,6 +22,7 @@
   --warn-soft: #fdf1dc;
   --ok: #2f7d4f;
   --track: #dfe3ea;
+  --seg-past: #b4bac6;
 
   --radius-sm: 7px;
   --radius: 11px;
@@ -55,6 +56,7 @@
     --warn-soft: #362a17;
     --ok: #7fc99a;
     --track: #323945;
+    --seg-past: #5a6272;
 
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
     --shadow: 0 2px 10px rgb(0 0 0 / 0.35);
@@ -713,8 +715,10 @@ button, input, textarea, select { font: inherit; color: inherit; }
   .day--selected:not(.day--today), .day--selected:not(.day--today):hover { color: #10141d; }
 }
 
-/* One mark per day. Track length = streaks that existed; fill = continued.
-   A missed day is an empty track. Nothing is ever red. */
+/* One mark per day: a segment per streak that existed, each in a fixed
+   position. Accent while its run is alive, muted once that run has ended,
+   empty on a missed day — an ended run is a grey line that stops, and the
+   live run is the only thing in colour. Nothing is ever red. */
 .day__track { display: flex; gap: 2px; height: 3px; width: 22px; }
 .day__seg {
   flex: 1;
@@ -733,15 +737,23 @@ button, input, textarea, select { font: inherit; color: inherit; }
   opacity: 0.72;
   transform: scaleX(0);
   transform-origin: left;
+  transition: opacity 0.18s;
 }
-.day__seg--on::after { transform: scaleX(1); }
+.day__seg--active::after { transform: scaleX(1); }
+.day__seg--past::after { transform: scaleX(1); background: var(--seg-past); opacity: 1; }
 /* A complete day fills a shade stronger — the calendar's one earned reward. */
-.day--full .day__seg::after,
-.day--today .day__seg::after { opacity: 1; }
+.day--full .day__seg--active::after,
+.day--today .day__seg--active::after { opacity: 1; }
 .day--selected:not(.day--today) .day__seg { background: rgb(255 255 255 / 0.32); }
-.day--selected:not(.day--today) .day__seg::after { background: currentColor; opacity: 1; }
+.day--selected:not(.day--today) .day__seg--active::after { background: currentColor; opacity: 1; }
+.day--selected:not(.day--today) .day__seg--past::after { background: currentColor; opacity: 0.55; }
 /* Only today's bar is in progress, so only today's bar moves. */
-.day--today .day__seg::after { transition: transform 0.26s cubic-bezier(0.2, 0.7, 0.2, 1) 0.18s; }
+.day--today .day__seg::after { transition: transform 0.26s cubic-bezier(0.2, 0.7, 0.2, 1) 0.18s, opacity 0.18s; }
+
+/* Spotlight: one streak's segments stay, the rest fall back. */
+.calendar--focus .day__seg--dim::after { opacity: 0.14; }
+.calendar--focus .day__seg--dim { background: color-mix(in srgb, var(--track) 55%, transparent); }
+.calendar--focus .day__seg--focus.day__seg--active::after { opacity: 1; }
 
 /* The last streak was just secured: one ring, then rest. */
 .day--pulse::before {
@@ -848,6 +860,21 @@ button, input, textarea, select { font: inherit; color: inherit; }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.srow__name--button {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.srow__name--button:hover { color: var(--accent); }
+.srow--focused .srow__name--button { color: var(--accent); }
 .srow__side {
   grid-area: side;
   display: flex;
@@ -908,6 +935,44 @@ button, input, textarea, select { font: inherit; color: inherit; }
 @keyframes num-up { from { transform: translateY(0); } to { transform: translateY(-1em); } }
 @keyframes num-down { from { transform: translateY(-1em); } to { transform: translateY(0); } }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* ==========================================================================
+   Hearth — the fireplace behind the Streak tracker
+   The canvas sits fixed under everything; panels turn faintly translucent
+   so the glow reads through them while text stays on a near-opaque surface,
+   and the page gets room at the bottom so scrolling to the end shows the
+   fire with nothing over it.
+   ========================================================================== */
+
+.hearth {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: #000;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  pointer-events: none;
+}
+.app--hearth { position: relative; z-index: 1; background: transparent; }
+.app--hearth .header {
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--border) 60%, transparent);
+}
+.app--hearth .main { padding-bottom: 42vh; }
+.app--hearth .calendar,
+.app--hearth .spanel {
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  border-color: color-mix(in srgb, var(--border) 70%, transparent);
+  box-shadow: 0 18px 50px rgb(0 0 0 / 0.35);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+}
+.app--hearth .srow--done { background: color-mix(in srgb, var(--surface-sunken) 70%, transparent); }
+.app--hearth .day:not(:disabled):not(.day--selected):hover { background: color-mix(in srgb, var(--surface-sunken) 80%, transparent); }
+.app--hearth .mobile-action .btn { box-shadow: 0 14px 40px rgb(0 0 0 / 0.5); }
 
 /* ==========================================================================
    Auth screen

@@ -14,6 +14,9 @@ interface TodayPanelProps {
   celebrating: string | null
   /** The streak just continued: its row is the one that invites a note. */
   justContinued: string | null
+  /** The streak being spotlighted on the calendar, if any. */
+  focusStreakId: string | null
+  onFocusStreak: (streakId: string | null) => void
   onContinue: (streak: Streak) => Promise<void>
   onUndo: (record: StreakRecord) => Promise<void>
   onSaveNote: (record: StreakRecord, note: string) => Promise<void>
@@ -47,6 +50,8 @@ export function TodayPanel({
   recordsToday,
   celebrating,
   justContinued,
+  focusStreakId,
+  onFocusStreak,
   onContinue,
   onUndo,
   onSaveNote,
@@ -120,6 +125,8 @@ export function TodayPanel({
                   mode="today"
                   celebrate={celebrating === streak.id}
                   inviteNote={justContinued === streak.id}
+                  focused={focusStreakId === streak.id}
+                  onFocus={onFocusStreak}
                   onContinue={() => onContinue(streak)}
                   onUndo={record ? () => onUndo(record) : undefined}
                   onSaveNote={record ? (note) => onSaveNote(record, note) : undefined}

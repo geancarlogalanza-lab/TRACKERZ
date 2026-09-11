@@ -25,9 +25,18 @@ chose to continue it, nothing more. A streak is continued on the day it
 happens — a missed day can't be filled in later, and a streak that ends says
 "Last streak 8 days · Start again" rather than anything harsher.
 
-Each calendar day carries one mark: a short bar whose length is how many
-streaks existed that day and whose fill is how many were continued. A missed
-day is an empty bar, never a colour.
+Each calendar day carries one mark: a short bar with a segment per streak
+that existed that day, each streak always in the same position. A segment is
+in the accent colour while its run is alive, muted grey once that run has
+ended, and empty on a day the streak was missed — so an ended run reads as a
+grey line that stops, and the live run is the only thing in colour. Hover or
+tap a streak's name to see just that streak's history on the calendar.
+
+Behind the Streak tracker burns a pixel fireplace — a small WebGL shader
+rendered at low resolution and scaled with hard pixel edges. It caps itself
+at 30 frames a second, stops when the tab is hidden, and shows a single
+still frame when the system prefers reduced motion. Panels over it are
+lightly frosted so the glow reads through while text stays legible.
 
 ## Stack
 
@@ -130,3 +139,11 @@ subpath without hardcoding the repository name.
 The publishable key ends up in the client bundle. That is how Supabase is meant
 to be used from a browser — Row Level Security, not the secrecy of that key, is
 what keeps each account's data private.
+
+## Credits
+
+The fireplace is ["Pixel Fireplace HD"](https://codepen.io/lexaterra/pen/jENzYPJ)
+by lexaterra, MIT licensed, adapted in `src/lib/fireplaceShader.ts`. Its
+simplex noise is by Ian McEwan of Ashima Arts
+([webgl-noise](https://github.com/ashima/webgl-noise)), also MIT. Both
+notices are kept in that file.

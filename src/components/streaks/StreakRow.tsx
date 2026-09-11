@@ -28,6 +28,10 @@ interface StreakRowProps {
   celebrate?: boolean
   /** Open the note field unprompted — this row was just continued. */
   inviteNote?: boolean
+  /** This streak is spotlighted on the calendar. */
+  focused?: boolean
+  /** Spotlight this streak on the calendar (hover, or tap the name), or clear. */
+  onFocus?: (streakId: string | null) => void
   onContinue?: () => Promise<void>
   onUndo?: () => Promise<void>
   onSaveNote?: (note: string) => Promise<void>
@@ -48,6 +52,8 @@ export function StreakRow({
   mode,
   celebrate = false,
   inviteNote = false,
+  focused = false,
+  onFocus,
   onContinue,
   onUndo,
   onSaveNote,
@@ -96,14 +102,30 @@ export function StreakRow({
   const actionLabel = count > 0 ? 'Start again' : 'Start'
 
   return (
-    <div className={`srow srow--${state}${celebrate ? ' srow--celebrate' : ''}`}>
+    <div
+      className={`srow srow--${state}${celebrate ? ' srow--celebrate' : ''}${focused ? ' srow--focused' : ''}`}
+      onMouseEnter={onFocus ? () => onFocus(streak.id) : undefined}
+      onMouseLeave={onFocus ? () => onFocus(null) : undefined}
+    >
       <span className={`srow__mark srow__mark--${state}`} aria-hidden="true">
         <CheckIcon size={12} />
       </span>
 
-      <div className="srow__name" title={streak.name}>
-        {streak.name}
-      </div>
+      {onFocus ? (
+        <button
+          type="button"
+          className="srow__name srow__name--button"
+          title={focused ? 'Show all streaks on the calendar' : 'Show only this streak on the calendar'}
+          aria-pressed={focused}
+          onClick={() => onFocus(focused ? null : streak.id)}
+        >
+          {streak.name}
+        </button>
+      ) : (
+        <div className="srow__name" title={streak.name}>
+          {streak.name}
+        </div>
+      )}
 
       <div className="srow__side">
         {state === 'missed' ? (

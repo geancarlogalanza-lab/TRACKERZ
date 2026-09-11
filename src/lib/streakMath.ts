@@ -79,6 +79,43 @@ export function standingOn(dates: Set<ISODate>, day: ISODate): TodayStanding {
   return { state: 'restart', count: lastRunBefore(dates, day) }
 }
 
+export interface DayRange {
+  start: ISODate
+  end: ISODate
+}
+
+/**
+ * The run that is still alive on `day`: it reaches `day` itself, or reaches
+ * yesterday and is still owed today. Every other recorded day belongs to a
+ * run that has ended. Null when nothing is alive.
+ */
+export function activeRunOn(dates: Set<ISODate>, day: ISODate): DayRange | null {
+  for (const end of [day, addDays(day, -1)]) {
+    const length = runEndingOn(dates, end)
+    if (length > 0) return { start: addDays(end, -(length - 1)), end }
+  }
+  return null
+}
+
+export type SegmentState =
+  /** Recorded, and part of the run that is still alive. */
+  | 'active'
+  /** Recorded, but part of a run that has since ended. */
+  | 'past'
+  /** The streak existed that day and was not continued. */
+  | 'empty'
+
+/** How one streak's segment should read on one day of the calendar. */
+export function segmentState(
+  dates: Set<ISODate>,
+  active: DayRange | null,
+  day: ISODate,
+): SegmentState {
+  if (!dates.has(day)) return 'empty'
+  if (active && day >= active.start && day <= active.end) return 'active'
+  return 'past'
+}
+
 /**
  * Milestones get a slightly longer beat in the count animation and nothing
  * else — no badge, no message. A week, a month, a hundred, each year.

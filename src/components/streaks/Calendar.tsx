@@ -1,13 +1,12 @@
 import { IconButton, Button } from '../ui/Button'
 import { ChevronLeftIcon, ChevronRightIcon } from '../ui/Icons'
 import { formatLongDay, monthName, toISODate } from '../../lib/dates'
+import type { SegmentState } from '../../lib/streakMath'
 import type { ISODate } from '../../data/types'
 
-export interface DayStats {
-  /** Streaks that existed on this day. Sets the length of the track. */
-  existed: number
-  /** Streaks continued on this day. Sets the fill. */
-  done: number
+export interface DaySegment {
+  streakId: string
+  state: SegmentState
 }
 
 interface CalendarProps {
@@ -15,7 +14,13 @@ interface CalendarProps {
   month: number
   today: ISODate
   selected: ISODate
-  statsFor: (day: ISODate) => DayStats
+  /**
+   * One segment per streak that existed on the day, always in the same order,
+   * so a streak's history reads as a continuous line across the month.
+   */
+  segmentsFor: (day: ISODate) => DaySegment[]
+  /** Spotlight one streak's segments and dim the rest, or null for all. */
+  focusStreakId: string | null
   /** Briefly ring today's cell — the last streak was just secured. */
   pulseToday: boolean
   onSelect: (date: ISODate) => void
@@ -25,17 +30,20 @@ interface CalendarProps {
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 /**
- * A month grid, Monday first. Each day carries one mark: a short track whose
- * length is how many streaks existed that day and whose fill is how many
- * were continued. A missed day is an empty track — never a colour. Future
- * days have no track and can't be selected; there is nothing there yet.
+ * A month grid, Monday first. Each day carries one mark: a short track with a
+ * segment per streak that existed that day. A segment is filled in the accent
+ * while its run is alive, muted once that run has ended, and empty on a day
+ * the streak was missed — so an ended run reads as a grey line that stops,
+ * and the live run is the only thing in colour. Future days have no track
+ * and can't be selected; there is nothing there yet.
  */
 export function Calendar({
   year,
   month,
   today,
   selected,
-  statsFor,
+  segmentsFor,
+  focusStreakId,
   pulseToday,
   onSelect,
   onMonthChange,
@@ -64,7 +72,10 @@ export function Calendar({
   }
 
   return (
-    <section className="calendar" aria-label="Streak calendar">
+    <section
+      className={`calendar${focusStreakId ? ' calendar--focus' : ''}`}
+      aria-label="Streak calendar"
+    >
       <header className="calendar__header">
         <h2 className="calendar__month" aria-live="polite">
           {monthName(month)} {year}
@@ -91,7 +102,10 @@ export function Calendar({
           const iso = toISODate(date)
           const isFuture = iso > today
           const isToday = iso === today
-          const { existed, done } = isFuture ? { existed: 0, done: 0 } : statsFor(iso)
+          const segments = isFuture ? [] : segmentsFor(iso)
+          const existed = segments.length
+          const done = segments.filter((segment) => segment.state !== 'empty').length
+
           const classes = [
             'day',
             date.getMonth() !== month ? 'day--outside' : '',
@@ -104,8 +118,7 @@ export function Calendar({
             .filter(Boolean)
             .join(' ')
 
-          const summary =
-            existed === 0 ? '' : `, ${done} of ${existed} continued`
+          const summary = existed === 0 ? '' : `, ${done} of ${existed} continued`
 
           return (
             <button
@@ -120,12 +133,20 @@ export function Calendar({
             >
               <span>{date.getDate()}</span>
               <span className="day__track" aria-hidden="true">
-                {Array.from({ length: existed }, (_, index) => (
-                  <span
-                    className={`day__seg${index < done ? ' day__seg--on' : ''}`}
-                    key={index}
-                  />
-                ))}
+                {segments.map((segment) => {
+                  const focus =
+                    focusStreakId === null
+                      ? ''
+                      : segment.streakId === focusStreakId
+                        ? ' day__seg--focus'
+                        : ' day__seg--dim'
+                  return (
+                    <span
+                      key={segment.streakId}
+                      className={`day__seg day__seg--${segment.state}${focus}`}
+                    />
+                  )
+                })}
               </span>
             </button>
           )
