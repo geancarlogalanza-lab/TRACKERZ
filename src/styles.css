@@ -163,11 +163,12 @@ button, input, textarea, select { font: inherit; color: inherit; }
 
 /* Dropdown menu for secondary actions */
 .menu { position: relative; flex: none; }
+/* Rendered at the document level (see Menu.tsx); inline top/bottom/right
+   come from the button it belongs to. Above panels and the mobile action
+   bar, below dialogs. */
 .menu__list {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 4px);
-  z-index: 40;
+  position: fixed;
+  z-index: 45;
   min-width: 168px;
   padding: 5px;
   background: var(--surface);
