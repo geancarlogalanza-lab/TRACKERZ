@@ -238,12 +238,13 @@ export function PendingTracker({ store }: { store: ReturnType<typeof usePendingT
       )}
 
       {dialog?.kind === 'new-subject' && (
-        <SubjectForm onSave={store.addSubject} onClose={close} />
+        <SubjectForm subjects={subjects} onSave={store.addSubject} onClose={close} />
       )}
 
       {dialog?.kind === 'edit-subject' && (
         <SubjectForm
           subject={dialog.subject}
+          subjects={subjects}
           onSave={(input) => store.editSubject(dialog.subject.id, input)}
           onClose={close}
         />

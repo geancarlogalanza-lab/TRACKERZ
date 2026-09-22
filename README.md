@@ -13,7 +13,9 @@ streak grows because you said it did.
 ```
 
 **Pending** — subjects you create, each with its own colour, holding the tasks
-still to do. A task carries a title, an optional description, when you plan to
+still to do. Colours are picked from a full hue wheel rather than a fixed
+palette, and the picker refuses one that would look like a subject you
+already have. A task carries a title, an optional description, when you plan to
 work on it, and when it is due. Anything overdue or landing today is pulled to
 a short list at the top. Completing a task removes it; the subject stays until
 you delete it yourself.
@@ -66,7 +68,7 @@ src/
     pendingRepository.ts subjects, tasks, trimesters
     streakRepository.ts  streaks, daily records
   hooks/         state, optimistic updates, error recovery
-  lib/           pure helpers: dates, streak counting, error messages
+  lib/           pure helpers: dates, streak counting, colour, error messages
   components/
     ui/          Button, Modal, Menu, Field, Feedback — shared by both trackers
     pending/     subject cards, task rows, forms, the strip, the month calendar
@@ -79,6 +81,13 @@ Two decisions worth knowing:
 `deadline_date`/`deadline_time` are stored as `date` and `time`, not as
 timestamps. A deadline of 11:59 PM on Sept 10 is that wall-clock time on every
 device, and nothing shifts when you cross a timezone.
+
+**Subject colours are compared perceptually.**  converts to
+CIELAB and measures CIEDE2000, because two colours far apart in RGB
+arithmetic can be indistinguishable on screen. The bar is a distance of 12,
+calibrated so the palette this app shipped with stays valid while near-misses
+are rejected. A subject may always keep the colour it already has, so a
+rename never forces a repaint.
 
 **Streak counting reads dates only.** `src/lib/streakMath.ts` takes a set of
 dates and returns a run length. It has no access to the note text by
