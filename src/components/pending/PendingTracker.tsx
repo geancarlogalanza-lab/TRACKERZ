@@ -4,20 +4,23 @@ import { PlusIcon } from '../ui/Icons'
 import { Menu } from '../ui/Menu'
 import { ConfirmDialog, EmptyState, ErrorNotice, Loading } from '../ui/Feedback'
 import { PromptDialog } from '../ui/PromptDialog'
+import { DayTasksPanel } from './DayTasksPanel'
 import { FocusStrip } from './FocusStrip'
+import { TaskCalendar } from './TaskCalendar'
 import { SubjectCard } from './SubjectCard'
 import { SubjectForm } from './SubjectForm'
 import { TaskForm } from './TaskForm'
-import { deadlineState } from '../../lib/dates'
+import { deadlineState, today as todayISO } from '../../lib/dates'
+import { indexTasksByDay } from '../../lib/taskCalendar'
 import { plural } from '../../lib/plural'
 import type { usePendingTracker } from '../../hooks/usePendingTracker'
-import type { Subject, Task } from '../../data/types'
+import type { ISODate, Subject, Task } from '../../data/types'
 
 type Dialog =
   | { kind: 'new-subject' }
   | { kind: 'edit-subject'; subject: Subject }
   | { kind: 'delete-subject'; subject: Subject }
-  | { kind: 'new-task'; subjectId: string }
+  | { kind: 'new-task'; subjectId: string; plannedDate?: ISODate }
   | { kind: 'edit-task'; task: Task }
   | { kind: 'new-trimester' }
   | { kind: 'rename-trimester' }
@@ -35,6 +38,13 @@ function byUrgency(a: Task, b: Task) {
 
 export function PendingTracker({ store }: { store: ReturnType<typeof usePendingTracker> }) {
   const [dialog, setDialog] = useState<Dialog>(null)
+  const [view, setView] = useState<'subjects' | 'calendar'>('subjects')
+  const today = todayISO()
+  const [selectedDay, setSelectedDay] = useState<ISODate>(today)
+  const [month, setMonth] = useState(() => {
+    const now = new Date()
+    return { year: now.getFullYear(), month: now.getMonth() }
+  })
   const close = () => setDialog(null)
 
   const {
@@ -55,6 +65,9 @@ export function PendingTracker({ store }: { store: ReturnType<typeof usePendingT
     [subjects],
   )
 
+  /** The calendar reads this and nothing else, so it can never drift. */
+  const tasksByDay = useMemo(() => indexTasksByDay(tasks), [tasks])
+
   const tasksBySubject = useMemo(() => {
     const grouped = new Map<string, Task[]>()
     for (const subject of subjects) grouped.set(subject.id, [])
@@ -72,13 +85,34 @@ export function PendingTracker({ store }: { store: ReturnType<typeof usePendingT
     return [...subjects].sort((a, b) => Number(hasOverdue(b)) - Number(hasOverdue(a)))
   }, [subjects, tasksBySubject])
 
-  const startNewTask = () => {
-    if (subjects.length > 0) setDialog({ kind: 'new-task', subjectId: subjects[0].id })
+  const startNewTask = (plannedDate?: ISODate) => {
+    if (subjects.length > 0) setDialog({ kind: 'new-task', subjectId: subjects[0].id, plannedDate })
   }
 
   return (
     <>
       <div className="toolbar">
+        <nav className="tabs" role="tablist" aria-label="Pending view">
+          <button
+            type="button"
+            role="tab"
+            className="tab"
+            aria-selected={view === 'subjects'}
+            onClick={() => setView('subjects')}
+          >
+            Subjects
+          </button>
+          <button
+            type="button"
+            role="tab"
+            className="tab"
+            aria-selected={view === 'calendar'}
+            onClick={() => setView('calendar')}
+          >
+            Calendar
+          </button>
+        </nav>
+
         <label className="sr-only" htmlFor="trimester-select">
           Trimester
         </label>
@@ -116,7 +150,7 @@ export function PendingTracker({ store }: { store: ReturnType<typeof usePendingT
         </Button>
         {subjects.length > 0 && (
           <span className="desktop-action">
-            <Button variant="primary" onClick={startNewTask}>
+            <Button variant="primary" onClick={() => startNewTask()}>
               <PlusIcon />
               New task
             </Button>
@@ -128,7 +162,34 @@ export function PendingTracker({ store }: { store: ReturnType<typeof usePendingT
 
       {loading && !loadError && <Loading label="Loading your subjects…" />}
 
-      {!loading && !loadError && (
+      {!loading && !loadError && view === 'calendar' && (
+        <div className="cal-layout">
+          <div className="cal-layout__grid">
+            <TaskCalendar
+              year={month.year}
+              month={month.month}
+              today={today}
+              selected={selectedDay}
+              byDay={tasksByDay}
+              subjectsById={subjectsById}
+              onSelect={setSelectedDay}
+              onMonthChange={(year, nextMonth) => setMonth({ year, month: nextMonth })}
+            />
+          </div>
+          <div className="cal-layout__day">
+            <DayTasksPanel
+              day={selectedDay}
+              tasks={tasksByDay.get(selectedDay)}
+              subjectsById={subjectsById}
+              onAddTask={subjects.length > 0 ? () => startNewTask(selectedDay) : undefined}
+              onEditTask={(task) => setDialog({ kind: 'edit-task', task })}
+              onCompleteTask={store.completeTask}
+            />
+          </div>
+        </div>
+      )}
+
+      {!loading && !loadError && view === 'subjects' && (
         <>
           <FocusStrip
             tasks={tasks}
@@ -169,7 +230,7 @@ export function PendingTracker({ store }: { store: ReturnType<typeof usePendingT
       {/* On a phone the primary action sits within thumb reach. */}
       {!loading && !loadError && subjects.length > 0 && (
         <div className="mobile-action">
-          <Button variant="primary" block onClick={startNewTask}>
+          <Button variant="primary" block onClick={() => startNewTask()}>
             <PlusIcon />
             New task
           </Button>
@@ -205,6 +266,7 @@ export function PendingTracker({ store }: { store: ReturnType<typeof usePendingT
         <TaskForm
           subjects={subjects}
           subjectId={dialog.subjectId}
+          initialPlannedDate={dialog.plannedDate}
           onSave={store.addTask}
           onClose={close}
         />

@@ -1,10 +1,12 @@
 import { IconButton } from '../ui/Button'
 import { CheckIcon, PencilIcon } from '../ui/Icons'
 import { deadlineState, formatMoment } from '../../lib/dates'
-import type { Task } from '../../data/types'
+import type { Subject, Task } from '../../data/types'
 
 interface TaskItemProps {
   task: Task
+  /** Shown when the surrounding context does not already name the subject. */
+  subject?: Subject
   onComplete: () => void
   onEdit: () => void
 }
@@ -13,7 +15,7 @@ interface TaskItemProps {
  * A pending task. Completing it is a single tap on the circle, after which the
  * task is gone for good — there is no archive to visit and nothing to undo.
  */
-export function TaskItem({ task, onComplete, onEdit }: TaskItemProps) {
+export function TaskItem({ task, subject, onComplete, onEdit }: TaskItemProps) {
   const planned = formatMoment(task.planned_date, task.planned_time)
   const due = formatMoment(task.deadline_date, task.deadline_time)
   const state = deadlineState(task.deadline_date, task.deadline_time)
@@ -36,8 +38,15 @@ export function TaskItem({ task, onComplete, onEdit }: TaskItemProps) {
         <p className="task__title">{task.title}</p>
         {task.description && <p className="task__desc">{task.description}</p>}
 
-        {(planned || due) && (
+        {(subject || planned || due) && (
           <div className="task__meta">
+            {subject && (
+              <span className="chip">
+                {/* The dot identifies, the name carries the meaning. */}
+                <span className="chip__dot" style={{ background: subject.color }} />
+                {subject.name}
+              </span>
+            )}
             {planned && (
               <span className="chip">
                 <span className="chip__label">Planned</span>

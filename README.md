@@ -18,6 +18,14 @@ work on it, and when it is due. Anything overdue or landing today is pulled to
 a short list at the top. Completing a task removes it; the subject stays until
 you delete it yourself.
 
+A **Calendar** switch in the toolbar shows the same tasks as a month. Each day
+previews the first few items and hands the rest to a day panel, so a busy week
+still scans: a circle is work planned for that day, a triangle is a deadline,
+and subject colour rides along on top of the shape rather than carrying the
+meaning alone. It is a view, not a second store — every task it draws comes
+from the same array the subject grid renders, so adding, editing, completing
+or moving a task moves the calendar with it and the two cannot disagree.
+
 **Streaks** — a Today panel and a month calendar. Continue a streak with one tap,
 then write whatever you like about the day if you want to. The text is stored
 as written and never read by the app: a streak counts consecutive days you
@@ -61,7 +69,7 @@ src/
   lib/           pure helpers: dates, streak counting, error messages
   components/
     ui/          Button, Modal, Menu, Field, Feedback — shared by both trackers
-    pending/     subject cards, task rows, forms, the "needs attention" strip
+    pending/     subject cards, task rows, forms, the strip, the month calendar
     streaks/     calendar, day panel, streak cards
 ```
 

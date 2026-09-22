@@ -3,7 +3,7 @@ import { Button } from '../ui/Button'
 import { Field, FieldPair, FormError } from '../ui/Field'
 import { Modal } from '../ui/Modal'
 import { toMessage } from '../../lib/errors'
-import type { Subject, Task, TaskInput } from '../../data/types'
+import type { ISODate, Subject, Task, TaskInput } from '../../data/types'
 
 interface TaskFormProps {
   subjects: Subject[]
@@ -11,6 +11,8 @@ interface TaskFormProps {
   subjectId: string
   /** Present when editing; absent when creating. */
   task?: Task
+  /** Seeds the planned date when creating from a calendar day. */
+  initialPlannedDate?: ISODate
   onSave: (subjectId: string, input: TaskInput) => Promise<void>
   onClose: () => void
 }
@@ -20,11 +22,18 @@ interface TaskFormProps {
  * screen: pick a subject, name the task, say when you plan to do it and when
  * it is due. Native date and time inputs keep this fast on a phone.
  */
-export function TaskForm({ subjects, subjectId, task, onSave, onClose }: TaskFormProps) {
+export function TaskForm({
+  subjects,
+  subjectId,
+  task,
+  initialPlannedDate,
+  onSave,
+  onClose,
+}: TaskFormProps) {
   const [selectedSubject, setSelectedSubject] = useState(subjectId)
   const [title, setTitle] = useState(task?.title ?? '')
   const [description, setDescription] = useState(task?.description ?? '')
-  const [plannedDate, setPlannedDate] = useState(task?.planned_date ?? '')
+  const [plannedDate, setPlannedDate] = useState(task?.planned_date ?? initialPlannedDate ?? '')
   const [plannedTime, setPlannedTime] = useState(task?.planned_time?.slice(0, 5) ?? '')
   const [deadlineDate, setDeadlineDate] = useState(task?.deadline_date ?? '')
   // Most college deadlines land at end of day, so that is the starting point.
