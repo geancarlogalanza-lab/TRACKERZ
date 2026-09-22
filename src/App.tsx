@@ -3,6 +3,7 @@ import { AuthScreen } from './components/AuthScreen'
 import { PendingTracker } from './components/pending/PendingTracker'
 import { Fireplace } from './components/streaks/Fireplace'
 import { StreakTracker } from './components/streaks/StreakTracker'
+import { BrandMark } from './components/ui/BrandMark'
 import { Button } from './components/ui/Button'
 import { ErrorNotice, Loading, Toast } from './components/ui/Feedback'
 import { useAuth } from './hooks/useAuth'
@@ -51,7 +52,7 @@ export default function App() {
       {showHearth && <Fireplace onReady={onHearthReady} />}
       <header className="header">
         <div className="header__brand">
-          <span className="header__mark" aria-hidden="true" />
+          <BrandMark />
           <span>Tracker</span>
         </div>
 

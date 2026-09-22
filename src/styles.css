@@ -221,8 +221,9 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .header__mark {
   width: 22px; height: 22px;
   border-radius: 6px;
-  background: linear-gradient(140deg, var(--accent), #8a6fe8);
   flex: none;
+  display: block;
+  object-fit: cover;
 }
 .header__spacer { flex: 1; }
 

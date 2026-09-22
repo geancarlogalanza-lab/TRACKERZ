@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { BrandMark } from './ui/BrandMark'
 import { Button } from './ui/Button'
 import { Field, FormError } from './ui/Field'
 import { supabase } from '../lib/supabase'
@@ -62,7 +63,7 @@ export function AuthScreen() {
     <main className="auth">
       <div className="auth__card">
         <div className="auth__brand">
-          <span className="header__mark" aria-hidden="true" />
+          <BrandMark />
           Tracker
         </div>
 
