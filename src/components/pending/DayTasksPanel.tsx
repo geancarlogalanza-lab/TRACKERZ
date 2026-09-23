@@ -48,25 +48,24 @@ export function DayTasksPanel({
     }
   }, [day])
 
-  const planned = tasks?.planned ?? []
   const due = tasks?.due ?? []
+  const dueIds = new Set(due.map((task) => task.id))
+  // Something due today is listed once, under Due. Its row already carries
+  // the planned time, so repeating it above costs the emphasis and adds
+  // nothing.
+  const planned = (tasks?.planned ?? []).filter((task) => !dueIds.has(task.id))
   const empty = planned.length === 0 && due.length === 0
 
-  const group = (title: string, list: Task[]) =>
-    list.length > 0 && (
-      <div className="dpanel__group">
-        <h3 className="section-title">{title}</h3>
-        {list.map((task) => (
-          <TaskItem
-            key={task.id}
-            task={task}
-            subject={subjectsById.get(task.subject_id)}
-            onComplete={() => onCompleteTask(task.id)}
-            onEdit={() => onEditTask(task)}
-          />
-        ))}
-      </div>
-    )
+  const rows = (list: Task[]) =>
+    list.map((task) => (
+      <TaskItem
+        key={task.id}
+        task={task}
+        subject={subjectsById.get(task.subject_id)}
+        onComplete={() => onCompleteTask(task.id)}
+        onEdit={() => onEditTask(task)}
+      />
+    ))
 
   return (
     <section className="dpanel" aria-labelledby="day-panel-heading" ref={panelRef}>
@@ -81,8 +80,23 @@ export function DayTasksPanel({
         <p className="dpanel__empty">Nothing planned or due.</p>
       ) : (
         <>
-          {group('Planned', planned)}
-          {group('Due', due)}
+          {/* Deadlines lead: they are the part of a day that cannot slip. */}
+          {due.length > 0 && (
+            <div className="dpanel__group dpanel__group--due">
+              <h3 className="dpanel__due-head">
+                <span className="cmark cmark--due" aria-hidden="true" />
+                Due this day
+              </h3>
+              {rows(due)}
+            </div>
+          )}
+
+          {planned.length > 0 && (
+            <div className="dpanel__group">
+              <h3 className="section-title">Planned</h3>
+              {rows(planned)}
+            </div>
+          )}
         </>
       )}
 

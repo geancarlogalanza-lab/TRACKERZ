@@ -821,8 +821,34 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .dpanel__date { flex: 1; font-size: 16px; font-weight: 650; min-width: 0; }
 .dpanel__relative { font-size: 13px; color: var(--text-faint); }
 .dpanel__empty { padding: 4px 6px 14px; color: var(--text-faint); font-size: 14px; }
-.dpanel__group + .dpanel__group { margin-top: 16px; }
+.dpanel__group + .dpanel__group { margin-top: 18px; }
 .dpanel__group .section-title { padding-left: 6px; }
+
+/* Deadlines get a container of their own: a warm ground and a rule down the
+   edge, so the part of the day that cannot slip is obvious before reading a
+   word of it. Planned work stays quiet underneath by contrast. */
+.dpanel__group--due {
+  padding: 11px 8px 4px;
+  border-radius: var(--radius);
+  background: var(--warn-soft);
+  box-shadow: inset 3px 0 0 var(--warn);
+}
+.dpanel__due-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 6px 4px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--warn);
+}
+/* The same triangle the calendar uses for a deadline. */
+.dpanel__due-head .cmark--due { color: var(--warn); filter: none; }
+
+.dpanel__group--due .task + .task { border-top-color: color-mix(in srgb, var(--warn) 22%, transparent); }
+.dpanel__group--due .task:hover { background: color-mix(in srgb, var(--warn) 12%, transparent); }
 .dpanel__foot { padding: 8px 2px 2px; }
 
 /* The subject chip: a dot identifies, the name carries the meaning. */
