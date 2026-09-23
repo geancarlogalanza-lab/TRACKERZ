@@ -561,17 +561,17 @@ button, input, textarea, select { font: inherit; color: inherit; }
     #ff0000, #ffff00 60deg, #00ff00 120deg, #00ffff 180deg,
     #0000ff 240deg, #ff00ff 300deg, #ff0000 360deg
   );
-  /* Punches the centre out so the square shows through. */
-  -webkit-mask: radial-gradient(
-    circle at 50% 50%,
-    transparent 0 var(--picker-inner),
-    #000 var(--picker-inner)
-  );
-  mask: radial-gradient(
-    circle at 50% 50%,
-    transparent 0 var(--picker-inner),
-    #000 var(--picker-inner)
-  );
+}
+
+/* The ring's hole. Paints over the disc, under the markers and thumb. */
+.picker__hole {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: var(--surface);
+  pointer-events: none;
 }
 
 .picker__square {

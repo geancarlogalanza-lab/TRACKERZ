@@ -150,6 +150,14 @@ export function ColorPicker({ value, onChange, taken, previewLabel }: ColorPicke
           onPointerMove={dragging(ringFromEvent)}
           onKeyDown={onRingKey}
         >
+          {/* Punches the centre out of the disc. Done with a real element
+              rather than a CSS mask, which older browsers skip silently —
+              and a missed mask would leave a solid disc over the square. */}
+          <span
+            className="picker__hole"
+            style={{ width: INNER_RADIUS * 2, height: INNER_RADIUS * 2 }}
+          />
+
           {/* Hues other subjects already hold, so the gaps are visible. */}
           {taken.map((item) => {
             const angle = hexToHsv(item.color).h
