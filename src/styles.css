@@ -1,69 +1,119 @@
 /* ==========================================================================
-   Design tokens
-   One small palette, generous spacing, no decoration for its own sake.
+   Tracker — design system
+
+   One type scale, one spacing rhythm, one set of radii and shadows, used
+   everywhere. Every text colour is measured, not eyeballed: each tier meets
+   4.5:1 on every surface it sits on, in both themes. The only tier below
+   that bar is --text-disabled, which is reserved for decoration (days
+   outside the month, days that have not happened yet).
    ========================================================================== */
 
 :root {
-  --bg: #f6f7f9;
+  /* Neutrals — greys with a slight blue bias, so they read as chosen. */
+  --bg: #f5f6f8;
   --surface: #ffffff;
-  --surface-sunken: #f1f3f6;
-  --border: #e3e6ec;
-  --border-strong: #d2d7e0;
-  --text: #171a21;
-  --text-muted: #666e7d;
-  --text-faint: #98a0ad;
+  --surface-sunken: #f2f4f7;
+  --surface-hover: #eceff3;
+  --surface-raised: #ffffff;
+  --surface-recessed: #f8f9fb;
+  --border: #e4e7ec;
+  --border-strong: #cfd4dc;
 
-  --accent: #3b62d9;
-  --accent-hover: #3355c4;
-  --accent-soft: #eaeffc;
-  --danger: #c8362f;
+  --text: #14171d;            /* 17.9:1 on surface */
+  --text-muted: #4f5766;      /*  7.3:1 */
+  --text-faint: #667080;      /*  5.0:1 — labels, never below 4.5 */
+  --text-disabled: #a1a8b4;   /*  decoration only */
+
+  --accent: #3558d0;
+  --accent-hover: #2b4bbd;
+  --accent-soft: #ebf0fd;
+  --accent-ink: #ffffff;      /* text on --accent */
+
+  --danger: #b42318;
   --danger-soft: #fdecea;
-  --warn: #9a6100;
-  --warn-soft: #fdf1dc;
-  --ok: #2f7d4f;
-  --track: #dfe3ea;
-  --seg-past: #b4bac6;
+  --danger-ink: #ffffff;
+  --warn: #8a5600;
+  --warn-soft: #fdf2df;
+  --ok: #237a48;
+  --track: #dde1e8;
+  --seg-past: #b1b8c4;
 
-  --radius-sm: 7px;
-  --radius: 11px;
-  --radius-lg: 15px;
+  /* Type. One bundled face, so every device renders the same app. */
+  --font: "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
-  --shadow-sm: 0 1px 2px rgb(16 20 30 / 0.06);
-  --shadow: 0 2px 10px rgb(16 20 30 / 0.07);
-  --shadow-lg: 0 14px 44px rgb(16 20 30 / 0.18);
+  --fs-2xs: 11px;   /* eyebrow labels, legends */
+  --fs-xs: 12px;    /* meta, dates, counts */
+  --fs-sm: 13px;    /* secondary text */
+  --fs-md: 14px;    /* body and controls */
+  --fs-lg: 16px;    /* panel and card titles */
+  --fs-xl: 20px;    /* page titles */
+  --fs-num: 22px;   /* streak counts — the reward */
 
-  --header-h: 58px;
+  /* Shape and size. */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+
+  --control-sm: 32px;
+  --control: 40px;
+  --control-lg: 48px;
+
+  --shadow-xs: 0 1px 2px rgb(16 24 40 / 0.05);
+  --shadow-sm: 0 1px 3px rgb(16 24 40 / 0.06), 0 1px 2px rgb(16 24 40 / 0.04);
+  --shadow: 0 4px 12px -2px rgb(16 24 40 / 0.08), 0 2px 4px -2px rgb(16 24 40 / 0.04);
+  --shadow-lg: 0 16px 40px -8px rgb(16 24 40 / 0.22), 0 4px 10px -4px rgb(16 24 40 / 0.08);
+
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --header-h: 56px;
+  --content: 1120px;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #101319;
-    --surface: #191d25;
-    --surface-sunken: #21262f;
-    --border: #2b313b;
-    --border-strong: #3a414d;
+    --bg: #0f1115;
+    --surface: #171a21;
+    --surface-sunken: #1f232b;
+    --surface-hover: #232832;
+    --surface-raised: #2a2f39;
+    --surface-recessed: #13161b;
+    --border: #272c35;
+    --border-strong: #363c47;
+
     --text: #eceef2;
-    --text-muted: #9aa3b1;
-    --text-faint: #6d7684;
+    --text-muted: #aab2bf;
+    --text-faint: #8d96a4;
+    --text-disabled: #5a6270;
 
     --accent: #7d9bff;
     --accent-hover: #96afff;
-    --accent-soft: #212a41;
-    --danger: #ff8b81;
-    --danger-soft: #3a211f;
-    --warn: #e5b168;
-    --warn-soft: #362a17;
-    --ok: #7fc99a;
+    --accent-soft: #1e2742;
+    --accent-ink: #0f1115;
+
+    --danger: #ff9189;
+    --danger-soft: #3b1d1b;
+    --danger-ink: #2a1210;
+    --warn: #f0b766;
+    --warn-soft: #33260f;
+    --ok: #7fd19e;
     --track: #323945;
     --seg-past: #5a6272;
 
-    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
-    --shadow: 0 2px 10px rgb(0 0 0 / 0.35);
-    --shadow-lg: 0 14px 44px rgb(0 0 0 / 0.55);
+    --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.3);
+    --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.35);
+    --shadow: 0 4px 14px -2px rgb(0 0 0 / 0.45);
+    --shadow-lg: 0 18px 44px -8px rgb(0 0 0 / 0.6);
     color-scheme: dark;
   }
 }
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
 
 * { box-sizing: border-box; }
 
@@ -73,16 +123,17 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
-    sans-serif;
-  font-size: 15px;
+  font-family: var(--font);
+  font-size: var(--fs-md);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
 }
 
 h1, h2, h3, p, figure { margin: 0; }
 button, input, textarea, select { font: inherit; color: inherit; }
+::selection { background: var(--accent-soft); color: var(--text); }
 
 :focus-visible {
   outline: 2px solid var(--accent);
@@ -108,41 +159,54 @@ button, input, textarea, select { font: inherit; color: inherit; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  min-height: 40px;
-  padding: 0 15px;
+  gap: 6px;
+  min-height: var(--control);
+  padding: 0 14px;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--text);
-  font-size: 14px;
-  font-weight: 550;
-  cursor: pointer;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  line-height: 1;
   white-space: nowrap;
-  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+  cursor: pointer;
+  user-select: none;
+  box-shadow: var(--shadow-xs);
+  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s,
+    transform 0.12s var(--ease);
 }
-.btn:hover:not(:disabled) { background: var(--surface-sunken); }
-.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn:hover:not(:disabled) { background: var(--surface-hover); }
+.btn:active:not(:disabled) { transform: scale(0.98); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
 
 .btn--primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
 }
 .btn--primary:hover:not(:disabled) {
   background: var(--accent-hover);
   border-color: var(--accent-hover);
 }
-@media (prefers-color-scheme: dark) { .btn--primary { color: #10141d; } }
 
-.btn--ghost { background: transparent; border-color: transparent; color: var(--text-muted); }
-.btn--ghost:hover:not(:disabled) { background: var(--surface-sunken); color: var(--text); }
+.btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-muted);
+  box-shadow: none;
+}
+.btn--ghost:hover:not(:disabled) { background: var(--surface-hover); color: var(--text); }
 
-.btn--danger { background: var(--danger); border-color: var(--danger); color: #fff; }
-.btn--danger:hover:not(:disabled) { opacity: 0.9; }
-@media (prefers-color-scheme: dark) { .btn--danger { color: #2a1210; } }
+.btn--danger { background: var(--danger); border-color: var(--danger); color: var(--danger-ink); }
+.btn--danger:hover:not(:disabled) { filter: brightness(1.06); }
 
-.btn--sm { min-height: 32px; padding: 0 11px; font-size: 13px; }
+.btn--sm {
+  min-height: var(--control-sm);
+  padding: 0 11px;
+  font-size: var(--fs-sm);
+  border-radius: var(--radius-sm);
+}
 .btn--block { width: 100%; }
 
 /* Compact icon button, sized for a comfortable touch target. */
@@ -159,35 +223,36 @@ button, input, textarea, select { font: inherit; color: inherit; }
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
-.icon-btn:hover { background: var(--surface-sunken); color: var(--text); }
+.icon-btn:hover { background: var(--surface-hover); color: var(--text); }
 
-/* Dropdown menu for secondary actions */
+/* Dropdown menu for secondary actions. Rendered inside the app root (see
+   Menu.tsx) so it takes the palette of the screen it opens on; inline
+   top/bottom/right come from the button it belongs to. */
 .menu { position: relative; flex: none; }
-/* Rendered at the document level (see Menu.tsx); inline top/bottom/right
-   come from the button it belongs to. Above panels and the mobile action
-   bar, below dialogs. */
 .menu__list {
   position: fixed;
   z-index: 45;
-  min-width: 168px;
-  padding: 5px;
-  background: var(--surface);
+  min-width: 180px;
+  padding: 4px;
+  background: var(--surface-raised);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-lg);
+  animation: menu-in 0.14s var(--ease);
 }
 .menu__item {
   display: block;
   width: 100%;
-  padding: 9px 11px;
+  padding: 8px 10px;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-xs);
   background: transparent;
   text-align: left;
-  font-size: 14px;
+  font-size: var(--fs-md);
+  font-weight: 500;
   cursor: pointer;
 }
-.menu__item:hover { background: var(--surface-sunken); }
+.menu__item:hover { background: var(--surface-hover); }
 .menu__item--danger { color: var(--danger); }
 
 /* ==========================================================================
@@ -196,6 +261,9 @@ button, input, textarea, select { font: inherit; color: inherit; }
 
 .app { min-height: 100%; display: flex; flex-direction: column; }
 
+/* The header's contents line up with the page's content column rather
+   than hugging the window edges, so the two never drift apart on a wide
+   screen. */
 .header {
   position: sticky;
   top: 0;
@@ -204,23 +272,22 @@ button, input, textarea, select { font: inherit; color: inherit; }
   align-items: center;
   gap: 16px;
   height: var(--header-h);
-  padding: 0 20px;
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
-  backdrop-filter: blur(10px);
+  padding: 0 max(20px, calc((100% - var(--content)) / 2 + 20px));
+  background: var(--surface);
   border-bottom: 1px solid var(--border);
 }
 
 .header__brand {
   display: flex;
   align-items: center;
-  gap: 9px;
-  font-size: 15px;
-  font-weight: 650;
+  gap: 10px;
+  font-size: var(--fs-lg);
+  font-weight: 600;
   letter-spacing: -0.01em;
 }
 .header__mark {
-  width: 22px; height: 22px;
-  border-radius: 6px;
+  width: 24px; height: 24px;
+  border-radius: 7px;
   flex: none;
   display: block;
   object-fit: cover;
@@ -230,23 +297,24 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .header__account {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 13px;
+  gap: 8px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
 }
 .header__email {
-  max-width: 190px;
+  max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Tab switcher - the app's only navigation. */
+/* Segmented control — the app's navigation, and the Pending view switch. */
 .tabs {
   display: inline-flex;
   padding: 3px;
   gap: 2px;
   background: var(--surface-sunken);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
 }
 .tab {
@@ -254,16 +322,17 @@ button, input, textarea, select { font: inherit; color: inherit; }
   border: none;
   background: transparent;
   color: var(--text-muted);
-  padding: 7px 18px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 550;
+  min-height: 32px;
+  padding: 0 16px;
+  border-radius: 7px;
+  font-size: var(--fs-md);
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
 }
 .tab:hover { color: var(--text); }
 .tab[aria-selected="true"] {
-  background: var(--surface);
+  background: var(--surface-raised);
   color: var(--text);
   box-shadow: var(--shadow-sm);
 }
@@ -271,9 +340,9 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .main {
   flex: 1;
   width: 100%;
-  max-width: 1120px;
+  max-width: var(--content);
   margin: 0 auto;
-  padding: 26px 20px 96px;
+  padding: 28px 20px 64px;
 }
 
 /* ==========================================================================
@@ -283,28 +352,50 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .toolbar {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 22px;
+  margin-bottom: 20px;
 }
 .toolbar__spacer { flex: 1; }
 
 .select {
-  min-height: 40px;
-  padding: 0 32px 0 12px;
+  min-height: var(--control);
+  padding: 0 34px 0 12px;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
-  background-color: var(--surface);
-  background-image: linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
-    linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
-  background-position: right 15px center, right 10px center;
-  background-size: 5px 5px, 5px 5px;
-  background-repeat: no-repeat;
+  background: var(--surface)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%237a8391' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E")
+    no-repeat right 11px center / 14px;
   appearance: none;
-  font-size: 14px;
-  font-weight: 550;
+  color: var(--text);
+  font-size: var(--fs-md);
+  font-weight: 500;
   cursor: pointer;
   max-width: 100%;
+  box-shadow: var(--shadow-xs);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* ==========================================================================
+   Cards — one treatment for every panel in the app
+   ========================================================================== */
+
+.focus,
+.subject,
+.tcal,
+.dpanel,
+.calendar,
+.spanel,
+.auth__card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 /* ==========================================================================
@@ -312,97 +403,96 @@ button, input, textarea, select { font: inherit; color: inherit; }
    ========================================================================== */
 
 .section-title {
-  font-size: 12px;
-  font-weight: 650;
-  letter-spacing: 0.07em;
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-faint);
-  margin-bottom: 11px;
+  margin-bottom: 10px;
 }
 
 .empty {
-  padding: 52px 24px;
+  padding: 48px 24px;
   text-align: center;
   background: var(--surface);
   border: 1px dashed var(--border-strong);
   border-radius: var(--radius-lg);
 }
-.empty__title { font-size: 16px; font-weight: 600; margin-bottom: 5px; }
-.empty__text { color: var(--text-muted); font-size: 14px; margin-bottom: 18px; }
+.empty__title { font-size: var(--fs-lg); font-weight: 600; margin-bottom: 4px; }
+.empty__text {
+  max-width: 42ch;
+  margin: 0 auto 20px;
+  color: var(--text-muted);
+  font-size: var(--fs-md);
+}
 
 .notice {
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  padding: 14px 16px;
+  padding: 12px 14px;
   border-radius: var(--radius);
   background: var(--danger-soft);
   color: var(--danger);
-  border: 1px solid color-mix(in srgb, var(--danger) 28%, transparent);
-  font-size: 14px;
+  box-shadow: inset 3px 0 0 var(--danger);
+  font-size: var(--fs-md);
 }
 
 .loading {
-  padding: 60px 0;
+  padding: 64px 0;
   text-align: center;
   color: var(--text-faint);
-  font-size: 14px;
+  font-size: var(--fs-md);
 }
 
-/* Toast - failures only, one at a time. */
+/* Toast — failures only, one at a time. */
 .toast {
   position: fixed;
   left: 50%;
-  bottom: 22px;
+  bottom: 24px;
   transform: translateX(-50%);
   z-index: 60;
   display: flex;
   align-items: center;
   gap: 12px;
   max-width: min(520px, calc(100vw - 32px));
-  padding: 12px 12px 12px 16px;
+  padding: 8px 8px 8px 16px;
   border-radius: var(--radius);
-  background: var(--surface);
-  border: 1px solid color-mix(in srgb, var(--danger) 35%, var(--border));
-  box-shadow: var(--shadow-lg);
-  font-size: 14px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg), inset 3px 0 0 var(--danger);
+  font-size: var(--fs-md);
+  animation: toast-in 0.22s var(--ease);
 }
 .toast__text { color: var(--text); }
 
 /* ==========================================================================
-   Focus strip - what needs attention right now
+   Focus strip — what needs attention right now
    ========================================================================== */
 
-.focus {
-  margin-bottom: 26px;
-  padding: 16px 18px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-}
-.focus__list { display: flex; flex-direction: column; gap: 2px; }
+.focus { margin-bottom: 24px; padding: 14px 16px 6px; }
+.focus__list { display: flex; flex-direction: column; }
 
 .focus-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 9px;
-  padding: 2px 2px 2px 0;
+  column-gap: 10px;
   min-height: 44px;
+  padding: 2px 0;
 }
-.focus-row .task__complete { margin-left: -6px; }
+.focus-row .task__complete { margin-left: -8px; }
 .focus-row + .focus-row { border-top: 1px solid var(--border); }
-.focus-row__dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.focus-row__dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
 .focus-row__title {
-  flex: 1;
   min-width: 0;
   font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.focus-row__subject { color: var(--text-faint); font-size: 13px; }
+.focus-row__subject { color: var(--text-faint); font-size: var(--fs-sm); font-weight: 400; }
 
 /* ==========================================================================
    Subjects
@@ -410,29 +500,23 @@ button, input, textarea, select { font: inherit; color: inherit; }
 
 .subject-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 16px;
   align-items: start;
 }
 
-.subject {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-}
+.subject { overflow: hidden; }
 /* The colour band identifies the subject; the name always carries the meaning. */
-.subject__band { height: 4px; background: var(--subject-color, var(--accent)); }
+.subject__band { height: 3px; background: var(--subject-color, var(--accent)); }
 
 .subject__header {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 14px 12px 12px 16px;
+  padding: 14px 10px 10px 16px;
 }
 .subject__swatch {
-  width: 11px; height: 11px;
+  width: 10px; height: 10px;
   border-radius: 50%;
   background: var(--subject-color, var(--accent));
   flex: none;
@@ -440,30 +524,33 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .subject__name {
   flex: 1;
   min-width: 0;
-  font-size: 15px;
-  font-weight: 650;
-  letter-spacing: -0.005em;
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  letter-spacing: -0.01em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .subject__count {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-faint);
-  background: var(--surface-sunken);
-  border-radius: 20px;
-  padding: 2px 9px;
   flex: none;
+  min-width: 22px;
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 .subject__tasks { padding: 0 8px; }
 .subject__empty {
-  padding: 6px 8px 18px;
+  padding: 2px 16px 14px;
   color: var(--text-faint);
-  font-size: 14px;
+  font-size: var(--fs-md);
 }
-.subject__footer { padding: 6px 8px 10px; }
+.subject__footer { padding: 2px 8px 10px; }
 
 /* ==========================================================================
    Tasks
@@ -472,9 +559,10 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .task {
   display: flex;
   align-items: flex-start;
-  gap: 4px;
-  padding: 9px 4px 9px 0;
+  gap: 2px;
+  padding: 8px 6px 8px 0;
   border-radius: var(--radius);
+  transition: background 0.15s;
 }
 .task + .task { border-top: 1px solid var(--border); }
 .task:hover { background: var(--surface-sunken); }
@@ -492,54 +580,71 @@ button, input, textarea, select { font: inherit; color: inherit; }
   border-radius: 50%;
 }
 .task__circle {
-  width: 19px; height: 19px;
-  border: 1.8px solid var(--border-strong);
+  width: 18px; height: 18px;
+  border: 1.5px solid var(--border-strong);
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: transparent;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  transition: border-color 0.15s, background 0.15s, color 0.15s, transform 0.15s var(--ease);
 }
-.task__complete:hover .task__circle {
+.task__complete:hover .task__circle,
+.task__complete:focus-visible .task__circle {
   border-color: var(--accent);
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
 }
+.task__complete:active .task__circle { transform: scale(0.9); }
 
-.task__body { flex: 1; min-width: 0; padding-top: 9px; }
-.task__title { font-weight: 500; overflow-wrap: anywhere; }
+.task__body { flex: 1; min-width: 0; padding-top: 10px; }
+.task__title { font-weight: 500; line-height: 1.4; overflow-wrap: anywhere; }
 .task__desc {
   margin-top: 2px;
-  font-size: 13.5px;
   color: var(--text-muted);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
   overflow-wrap: anywhere;
 }
 .task__meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 7px;
+  align-items: center;
+  gap: 4px 14px;
+  margin-top: 6px;
 }
-.task__edit { flex: none; margin-top: 4px; }
+.task__edit { flex: none; margin-top: 3px; }
 
-/* Deadline / planned chips */
+/* Dates and subject references. Plain text by default — only the two
+   states that need action (overdue, due today) become pills, so a pill on
+   screen always means "look at this", never just "a date". */
 .chip {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 2px 9px;
-  border-radius: 20px;
-  font-size: 12.5px;
-  font-weight: 550;
-  background: var(--surface-sunken);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  line-height: 20px;
   color: var(--text-muted);
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.chip__label { color: var(--text-faint); }
+.chip--overdue,
+.chip--today {
+  padding: 0 8px;
+  border-radius: var(--radius-pill);
+  font-weight: 600;
 }
 .chip--overdue { background: var(--danger-soft); color: var(--danger); }
 .chip--today { background: var(--warn-soft); color: var(--warn); }
-.chip--soon { background: var(--accent-soft); color: var(--accent); }
-.chip__label { opacity: 0.75; font-weight: 500; }
+.chip--soon { color: var(--accent); }
+.chip--overdue .chip__label,
+.chip--today .chip__label,
+.chip--soon .chip__label { color: inherit; font-weight: 500; }
+
+/* The subject chip: a dot identifies, the name carries the meaning. */
+.chip__dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
 
 /* ==========================================================================
    Subject colour picker
@@ -576,7 +681,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 
 .picker__square {
   position: absolute;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   cursor: crosshair;
   touch-action: none;
   background-image:
@@ -614,22 +719,26 @@ button, input, textarea, select { font: inherit; color: inherit; }
   min-height: 64px;
   padding: 10px 12px;
   border-radius: var(--radius);
-  font-size: 14px;
-  font-weight: 650;
+  font-size: var(--fs-md);
+  font-weight: 600;
   text-align: center;
   overflow-wrap: anywhere;
   box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12);
 }
 
 .picker__hex .input {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 13.5px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
   text-transform: lowercase;
-  min-height: 38px;
 }
 
-.picker__status { margin-top: 12px; font-size: 13px; line-height: 1.45; color: var(--text-muted); }
-.picker__status--blocked { color: var(--danger); font-weight: 550; }
+.picker__status {
+  margin-top: 12px;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+}
+.picker__status--blocked { color: var(--danger); font-weight: 600; }
 
 /* A subject's colour is free to be pale or near-black, so every place it is
    drawn carries a hairline edge and stays visible on either background. */
@@ -662,81 +771,83 @@ button, input, textarea, select { font: inherit; color: inherit; }
   align-items: start;
 }
 
-.tcal {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  padding: 16px;
-}
+.tcal { padding: 16px 16px 14px; }
 .tcal__header {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 14px;
+  gap: 4px;
+  margin-bottom: 12px;
 }
-.tcal__month { flex: 1; font-size: 15px; font-weight: 650; }
+.tcal__month { flex: 1; font-size: var(--fs-lg); font-weight: 600; letter-spacing: -0.01em; }
 
-.tcal__grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.tcal__grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
 .tcal__weekday {
-  text-align: center;
-  font-size: 11px;
-  font-weight: 650;
-  letter-spacing: 0.04em;
+  padding: 0 8px 8px;
+  text-align: left;
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--text-faint);
-  padding-bottom: 6px;
 }
 .tcal__weekday-short { display: none; }
 
 /* --- Day cell ------------------------------------------------------------- */
 
+/* A hairline grid rather than a field of filled boxes: the month reads as
+   one calm surface, and colour is left to the things that carry meaning. */
 .cday {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 4px;
-  min-height: 98px;
+  gap: 3px;
+  min-height: 104px;
   min-width: 0;
-  padding: 6px 5px 5px;
-  border: 1px solid transparent;
-  border-radius: var(--radius);
-  background: var(--surface-sunken);
+  padding: 6px;
+  border: 0;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
   color: var(--text);
   font: inherit;
   text-align: left;
   cursor: pointer;
   overflow: hidden;
-  transition: border-color 0.14s, background 0.14s;
+  transition: background 0.12s;
 }
-.cday:hover { border-color: var(--border-strong); }
-.cday--outside { background: transparent; }
-.cday--outside .cday__num { color: var(--text-faint); opacity: 0.6; }
+/* Close the grid on its left edge (Mondays) and top edge (first week). The
+   first seven grid children are the weekday headings. */
+.tcal__grid > .cday:nth-child(7n + 1) { border-left: 1px solid var(--border); }
+.tcal__grid > .cday:nth-child(n + 8):nth-child(-n + 14) { border-top: 1px solid var(--border); }
+
+.cday:hover { background: var(--surface-sunken); }
+.cday--outside { background: var(--surface-recessed); }
+.cday--outside .cday__num { color: var(--text-disabled); }
 
 .cday__num {
   flex: none;
-  font-size: 12.5px;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-xs);
   font-weight: 600;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
-  padding-left: 2px;
 }
 /* Today wears a filled pill, selected wears the ring: two different
    devices, so the two states are never mistaken for each other. */
-.cday--today .cday__num {
-  align-self: flex-start;
-  padding: 1px 6px;
-  border-radius: 999px;
-  background: var(--accent);
-  color: #fff;
-  font-weight: 700;
-}
-@media (prefers-color-scheme: dark) {
-  .cday--today .cday__num { color: #10141d; }
-}
-.cday--selected {
+.cday--today .cday__num { background: var(--accent); color: var(--accent-ink); }
+.cday--selected,
+.cday--selected:hover {
+  z-index: 1;
   background: var(--accent-soft);
-  border-color: var(--accent);
-  box-shadow: inset 0 0 0 1px var(--accent);
+  box-shadow: inset 0 0 0 2px var(--accent);
 }
 
 /* Text preview — wider screens only. */
@@ -745,12 +856,12 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .centry {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   min-width: 0;
-  padding: 2px 4px;
-  border-radius: 4px;
-  font-size: 11.5px;
-  line-height: 1.25;
+  padding: 2px 5px;
+  border-radius: var(--radius-xs);
+  font-size: var(--fs-xs);
+  line-height: 1.3;
 }
 .centry__title {
   min-width: 0;
@@ -759,19 +870,19 @@ button, input, textarea, select { font: inherit; color: inherit; }
   white-space: nowrap;
   color: var(--text-muted);
 }
-/* A deadline is filled and named, so it reads as due in greyscale too. */
-.centry--due { background: var(--surface); box-shadow: inset 0 0 0 1px var(--border); }
+/* A deadline is filled and bold, so it reads as due in greyscale too. */
+.centry--due { background: var(--surface); box-shadow: inset 0 0 0 1px var(--border-strong); }
 .centry--due .centry__title { color: var(--text); font-weight: 600; }
 
 .cday__more {
-  font-size: 10.5px;
+  padding-left: 5px;
+  font-size: var(--fs-2xs);
   font-weight: 600;
   color: var(--text-faint);
-  padding-left: 7px;
 }
 
 /* Shape preview — phones, where no title would fit. */
-.cday__marks { display: none; align-items: center; gap: 3px; flex-wrap: wrap; padding-left: 2px; }
+.cday__marks { display: none; align-items: center; gap: 3px; flex-wrap: wrap; }
 .cmark { flex: none; color: var(--accent); }
 .cmark--planned {
   width: 6px;
@@ -787,26 +898,26 @@ button, input, textarea, select { font: inherit; color: inherit; }
   border-bottom: 6px solid currentColor;
   border-radius: 1px;
 }
-.cday__more-mark { font-size: 9px; font-weight: 600; line-height: 1; color: var(--text-faint); }
+.cday__more-mark {
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text-faint);
+}
 
 .tcal__legend {
   display: flex;
-  gap: 14px;
-  margin-top: 10px;
-  padding-left: 2px;
-  font-size: 11.5px;
+  gap: 16px;
+  margin-top: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
 }
-.tcal__legend span { display: inline-flex; align-items: center; gap: 5px; }
+.tcal__legend span { display: inline-flex; align-items: center; gap: 6px; }
 .tcal__legend .cmark { color: var(--text-faint); }
 
 /* --- Selected day --------------------------------------------------------- */
 
 .dpanel {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
   padding: 16px 12px 10px;
   scroll-margin-top: calc(var(--header-h) + 12px);
 }
@@ -816,11 +927,11 @@ button, input, textarea, select { font: inherit; color: inherit; }
   gap: 10px;
   flex-wrap: wrap;
   padding: 0 6px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
-.dpanel__date { flex: 1; font-size: 16px; font-weight: 650; min-width: 0; }
-.dpanel__relative { font-size: 13px; color: var(--text-faint); }
-.dpanel__empty { padding: 4px 6px 14px; color: var(--text-faint); font-size: 14px; }
+.dpanel__date { flex: 1; min-width: 0; font-size: var(--fs-lg); font-weight: 600; letter-spacing: -0.01em; }
+.dpanel__relative { font-size: var(--fs-sm); color: var(--text-faint); }
+.dpanel__empty { padding: 2px 6px 12px; color: var(--text-faint); font-size: var(--fs-md); }
 .dpanel__group + .dpanel__group { margin-top: 18px; }
 .dpanel__group .section-title { padding-left: 6px; }
 
@@ -828,7 +939,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
    edge, so the part of the day that cannot slip is obvious before reading a
    word of it. Planned work stays quiet underneath by contrast. */
 .dpanel__group--due {
-  padding: 11px 8px 4px;
+  padding: 12px 6px 4px;
   border-radius: var(--radius);
   background: var(--warn-soft);
   box-shadow: inset 3px 0 0 var(--warn);
@@ -837,22 +948,25 @@ button, input, textarea, select { font: inherit; color: inherit; }
   display: flex;
   align-items: center;
   gap: 7px;
-  padding: 0 6px 4px;
-  font-size: 12px;
+  padding: 0 8px 4px;
+  font-size: var(--fs-2xs);
   font-weight: 700;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--warn);
 }
 /* The same triangle the calendar uses for a deadline. */
 .dpanel__due-head .cmark--due { color: var(--warn); filter: none; }
 
-.dpanel__group--due .task + .task { border-top-color: color-mix(in srgb, var(--warn) 22%, transparent); }
-.dpanel__group--due .task:hover { background: color-mix(in srgb, var(--warn) 12%, transparent); }
-.dpanel__foot { padding: 8px 2px 2px; }
-
-/* The subject chip: a dot identifies, the name carries the meaning. */
-.chip__dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.dpanel__group--due .task + .task {
+  border-top-color: var(--border);
+  border-top-color: color-mix(in srgb, var(--warn) 22%, transparent);
+}
+.dpanel__group--due .task:hover {
+  background: transparent;
+  background: color-mix(in srgb, var(--warn) 10%, transparent);
+}
+.dpanel__foot { padding: 8px 0 2px; }
 
 @media (max-width: 860px) {
   .cal-layout { grid-template-columns: 1fr; }
@@ -860,21 +974,20 @@ button, input, textarea, select { font: inherit; color: inherit; }
 
 @media (max-width: 700px) {
   .tcal { padding: 12px; }
-  .tcal__grid { gap: 3px; }
+  .tcal__weekday { padding: 0 0 6px; text-align: center; }
   .tcal__weekday-long { display: none; }
   .tcal__weekday-short { display: inline; }
 
   /* Titles cannot fit at this width, so the cell speaks in shapes. */
   .cday {
-    min-height: 52px;
-    gap: 3px;
-    padding: 5px 3px;
+    min-height: 54px;
+    gap: 4px;
+    padding: 5px 2px;
     align-items: center;
   }
-  .cday__num { font-size: 13.5px; padding-left: 0; }
-  .cday--today .cday__num { align-self: center; }
+  .cday__num { align-self: center; }
   .cday__list { display: none; }
-  .cday__marks { display: flex; justify-content: center; padding-left: 0; }
+  .cday__marks { display: flex; justify-content: center; }
   .tcal__legend { justify-content: center; }
 }
 
@@ -889,65 +1002,72 @@ button, input, textarea, select { font: inherit; color: inherit; }
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
-  background: rgb(12 15 22 / 0.42);
-  backdrop-filter: blur(2px);
+  padding: 24px;
+  background: rgb(10 12 16 / 0.48);
+  animation: overlay-in 0.16s ease-out;
 }
 
 .modal {
   width: 100%;
   max-width: 460px;
-  max-height: calc(100dvh - 40px);
+  max-height: calc(100dvh - 48px);
   display: flex;
   flex-direction: column;
   background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
   border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  animation: modal-in 0.2s var(--ease);
 }
 .modal__header {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 18px 14px 12px 20px;
+  padding: 18px 14px 14px 20px;
 }
-.modal__title { flex: 1; font-size: 16px; font-weight: 650; }
+.modal__title { flex: 1; font-size: var(--fs-lg); font-weight: 600; letter-spacing: -0.01em; }
 .modal__body { padding: 0 20px; overflow-y: auto; }
 .modal__footer {
   display: flex;
   justify-content: flex-end;
-  gap: 9px;
-  padding: 18px 20px 20px;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 14px 20px 18px;
+  border-top: 1px solid var(--border);
 }
 
-.field { margin-bottom: 15px; }
+.field { margin-bottom: 16px; }
 .field__label {
   display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-muted);
   margin-bottom: 6px;
+  color: var(--text);
+  font-size: var(--fs-sm);
+  font-weight: 500;
 }
 .field__hint { font-weight: 400; color: var(--text-faint); }
 
 .input, .textarea {
   width: 100%;
-  min-height: 42px;
+  min-height: var(--control);
   padding: 9px 12px;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   background: var(--surface);
+  color: var(--text);
+  font-size: var(--fs-md);
+  box-shadow: var(--shadow-xs);
   transition: border-color 0.15s, box-shadow 0.15s;
 }
+.input::placeholder, .textarea::placeholder { color: var(--text-faint); opacity: 1; }
 .input:focus, .textarea:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
-.textarea { resize: vertical; min-height: 74px; }
+.textarea { resize: vertical; min-height: 80px; line-height: 1.45; }
 
 /* Date and time sit side by side; both stay comfortable to tap. */
-.field-pair { display: grid; grid-template-columns: 1.35fr 1fr; gap: 9px; }
+.field-pair { display: grid; grid-template-columns: 1.35fr 1fr; gap: 8px; }
 
 .form-error {
   margin-bottom: 14px;
@@ -955,9 +1075,9 @@ button, input, textarea, select { font: inherit; color: inherit; }
   border-radius: var(--radius);
   background: var(--danger-soft);
   color: var(--danger);
-  font-size: 13.5px;
+  box-shadow: inset 3px 0 0 var(--danger);
+  font-size: var(--fs-sm);
 }
-
 
 /* ==========================================================================
    Streak tracker
@@ -971,7 +1091,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .streak-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-  gap: 20px;
+  gap: 16px;
   align-items: start;
 }
 .streak-layout__calendar { grid-column: 1; grid-row: 1 / span 2; }
@@ -980,29 +1100,23 @@ button, input, textarea, select { font: inherit; color: inherit; }
 
 /* --- Calendar ------------------------------------------------------------ */
 
-.calendar {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  padding: 16px;
-}
+.calendar { padding: 16px; }
 .calendar__header {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 14px;
+  gap: 4px;
+  margin-bottom: 12px;
 }
-.calendar__month { flex: 1; font-size: 15px; font-weight: 650; }
+.calendar__month { flex: 1; font-size: var(--fs-lg); font-weight: 600; letter-spacing: -0.01em; }
 
 .calendar__grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
 .calendar__weekday {
-  text-align: center;
-  font-size: 11px;
-  font-weight: 650;
-  letter-spacing: 0.04em;
-  color: var(--text-faint);
   padding-bottom: 6px;
+  text-align: center;
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
 }
 
 .day {
@@ -1014,35 +1128,33 @@ button, input, textarea, select { font: inherit; color: inherit; }
   align-items: center;
   justify-content: center;
   gap: 5px;
-  border: 1px solid transparent;
+  border: 0;
   border-radius: var(--radius);
   background: transparent;
   color: var(--text);
-  font-size: 14px;
+  font-size: var(--fs-md);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
   cursor: pointer;
-  transition: background 0.14s, border-color 0.14s;
+  transition: background 0.12s, color 0.12s;
 }
 .day:disabled { cursor: default; }
 .day:not(:disabled):not(.day--selected):hover { background: var(--surface-sunken); }
-.day--outside { color: var(--text-faint); opacity: 0.55; }
-.day--future { color: var(--text-faint); opacity: 0.5; }
+.day--outside { color: var(--text-disabled); }
+.day--future { color: var(--text-disabled); }
 .day--today { font-weight: 700; color: var(--accent); }
 .day--today.day--selected { background: var(--accent-soft); }
 .day--selected:not(.day--today),
 .day--selected:not(.day--today):hover {
   background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-}
-@media (prefers-color-scheme: dark) {
-  .day--selected:not(.day--today), .day--selected:not(.day--today):hover { color: #10141d; }
+  color: var(--accent-ink);
 }
 
 /* One mark per day: a segment per streak that existed, each in a fixed
    position. Accent while its run is alive, muted once that run has ended,
    empty on a missed day — an ended run is a grey line that stops, and the
    live run is the only thing in colour. Nothing is ever red. */
-.day__track { display: flex; gap: 2px; height: 3px; width: 22px; }
+.day__track { display: flex; gap: 2px; height: 4px; width: 24px; }
 .day__seg {
   flex: 1;
   min-width: 2px;
@@ -1071,11 +1183,13 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .day--selected:not(.day--today) .day__seg--active::after { background: currentColor; opacity: 1; }
 .day--selected:not(.day--today) .day__seg--past::after { background: currentColor; opacity: 0.55; }
 /* Only today's bar is in progress, so only today's bar moves. */
-.day--today .day__seg::after { transition: transform 0.26s cubic-bezier(0.2, 0.7, 0.2, 1) 0.18s, opacity 0.18s; }
+.day--today .day__seg::after {
+  transition: transform 0.26s var(--ease) 0.18s, opacity 0.18s;
+}
 
 /* Spotlight: one streak's segments stay, the rest fall back. */
 .calendar--focus .day__seg--dim::after { opacity: 0.14; }
-.calendar--focus .day__seg--dim { background: color-mix(in srgb, var(--track) 55%, transparent); }
+.calendar--focus .day__seg--dim { opacity: 0.55; }
 .calendar--focus .day__seg--focus.day__seg--active::after { opacity: 1; }
 
 /* The last streak was just secured: one ring, then rest. */
@@ -1089,39 +1203,29 @@ button, input, textarea, select { font: inherit; color: inherit; }
   pointer-events: none;
   animation: day-pulse 0.55s ease-out 0.5s 1 forwards;
 }
-@keyframes day-pulse {
-  0% { opacity: 0.55; transform: scale(1); }
-  100% { opacity: 0; transform: scale(1.22); }
-}
 
 /* --- Panels (Today, and a past day's details) ---------------------------- */
 
-.spanel {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  padding: 16px 12px 8px;
-}
+.spanel { padding: 16px 12px 8px; }
 .spanel__head {
   display: flex;
   align-items: baseline;
   gap: 10px;
-  padding: 0 6px;
+  padding: 0 8px;
   margin-bottom: 8px;
 }
-.spanel__title { flex: 1; font-size: 16px; font-weight: 650; min-width: 0; }
+.spanel__title { flex: 1; min-width: 0; font-size: var(--fs-lg); font-weight: 600; letter-spacing: -0.01em; }
 .spanel__status {
-  font-size: 13px;
   color: var(--text-muted);
+  font-size: var(--fs-sm);
   font-variant-numeric: tabular-nums;
   animation: fade-in 0.2s ease-out;
 }
 .spanel__status--secured { color: var(--ok); font-weight: 600; }
 .spanel__close { align-self: center; margin: -6px -6px -6px 0; }
-.spanel__rows { display: flex; flex-direction: column; }
-.spanel__foot { padding: 6px 2px 2px; }
-.spanel__empty { padding: 6px 6px 12px; color: var(--text-faint); font-size: 14px; }
+.spanel__rows { display: flex; flex-direction: column; gap: 2px; }
+.spanel__foot { padding: 6px 0 2px; }
+.spanel__empty { padding: 4px 8px 12px; color: var(--text-faint); font-size: var(--fs-md); }
 .spanel .empty { border: none; background: transparent; padding: 24px 8px 20px; }
 
 /* --- Row ------------------------------------------------------------------ */
@@ -1137,7 +1241,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
   column-gap: 12px;
   row-gap: 4px;
   align-items: center;
-  padding: 11px 8px;
+  padding: 10px 8px;
   border-top: 1px solid var(--border);
   border-radius: var(--radius);
   transition: background 0.3s 0.1s;
@@ -1154,14 +1258,16 @@ button, input, textarea, select { font: inherit; color: inherit; }
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  border: 1.8px solid var(--border-strong);
+  border: 1.5px solid var(--border-strong);
   display: grid;
   place-items: center;
-  color: #fff;
+  color: var(--accent-ink);
   transition: background 0.2s, border-color 0.2s;
 }
-@media (prefers-color-scheme: dark) { .srow__mark { color: #10141d; } }
-.srow__mark svg { transform: scale(0); transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1) 0.06s; }
+.srow__mark svg {
+  transform: scale(0);
+  transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1) 0.06s;
+}
 .srow__mark--done { background: var(--accent); border-color: var(--accent); }
 .srow__mark--done svg { transform: scale(1); }
 .srow__mark--restart::after,
@@ -1169,16 +1275,16 @@ button, input, textarea, select { font: inherit; color: inherit; }
   content: "";
   position: absolute;
   width: 8px;
-  height: 1.8px;
+  height: 1.5px;
   border-radius: 1px;
   background: var(--text-faint);
 }
 
 .srow__name {
   grid-area: name;
-  font-weight: 600;
-  font-size: 14.5px;
   min-width: 0;
+  font-size: var(--fs-md);
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1194,7 +1300,8 @@ button, input, textarea, select { font: inherit; color: inherit; }
   font-weight: 600;
   color: inherit;
   cursor: pointer;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-xs);
+  transition: color 0.15s;
 }
 .srow__name--button:hover { color: var(--accent); }
 .srow--focused .srow__name--button { color: var(--accent); }
@@ -1208,28 +1315,38 @@ button, input, textarea, select { font: inherit; color: inherit; }
 }
 
 /* The count is the largest type in the row. It is the reward. */
-.srow__count { display: inline-flex; align-items: baseline; gap: 5px; font-variant-numeric: tabular-nums; }
-.srow__count .num { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
-.srow__unit { font-size: 12px; color: var(--text-muted); }
+.srow__count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  font-variant-numeric: tabular-nums;
+}
+.srow__count .num { font-size: var(--fs-num); font-weight: 700; letter-spacing: -0.02em; }
+.srow__unit { font-size: var(--fs-xs); color: var(--text-muted); }
 .srow__count--last { color: var(--text-muted); }
-.srow__count--last .num { font-size: 15px; font-weight: 600; }
-.srow__count-label { font-size: 12px; color: var(--text-faint); margin-right: 2px; }
-.srow__quiet { font-size: 13px; color: var(--text-faint); }
-.srow__error { grid-area: error; margin: 0; font-size: 13px; color: var(--danger); }
+.srow__count--last .num { font-size: var(--fs-lg); font-weight: 600; }
+.srow__count-label { margin-right: 2px; font-size: var(--fs-xs); color: var(--text-faint); }
+.srow__quiet { font-size: var(--fs-sm); color: var(--text-faint); }
+.srow__error { grid-area: error; margin: 0; font-size: var(--fs-sm); color: var(--danger); }
 
 .srow__note { grid-area: note; min-width: 0; }
 .srow__note-form { display: flex; gap: 6px; align-items: center; }
-.srow__note-form .input { min-height: 34px; padding: 5px 10px; font-size: 13.5px; }
+.srow__note-form .input {
+  min-height: var(--control-sm);
+  padding: 5px 10px;
+  font-size: var(--fs-sm);
+}
 .srow__note-view { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
-.srow__note-text { font-size: 13.5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.srow__note-text { font-size: var(--fs-sm); white-space: pre-wrap; overflow-wrap: anywhere; }
 .srow__note-text--empty { color: var(--text-faint); font-style: italic; }
 .srow__note-edit {
   flex: none;
+  padding: 0;
   border: none;
   background: none;
-  padding: 0;
-  font-size: 12.5px;
   color: var(--text-faint);
+  font-size: var(--fs-xs);
+  font-weight: 500;
   cursor: pointer;
 }
 .srow__note-edit:hover { color: var(--text); }
@@ -1240,31 +1357,29 @@ button, input, textarea, select { font: inherit; color: inherit; }
   position: absolute;
   inset: 0;
   border-radius: var(--radius);
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 14%, transparent), transparent);
+  background: linear-gradient(90deg, transparent, rgb(125 155 255 / 0.16), transparent);
   transform: translateX(-100%);
   animation: srow-sweep 0.6s ease-out 0.2s 1 forwards;
   pointer-events: none;
 }
-@keyframes srow-sweep { to { transform: translateX(100%); } }
 
 /* --- Rolling number ------------------------------------------------------- */
 
 .num { display: inline-block; height: 1em; overflow: hidden; vertical-align: bottom; line-height: 1; }
 .num__in { display: flex; flex-direction: column; line-height: 1; }
 .num__in > span { display: block; height: 1em; }
-.num__in--up { animation: num-up 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) 0.12s both; }
+.num__in--up { animation: num-up 0.32s var(--ease) 0.12s both; }
 .num__in--down { animation: num-down 0.2s ease-out both; }
 .num__in--long { animation-duration: 0.48s; }
-@keyframes num-up { from { transform: translateY(0); } to { transform: translateY(-1em); } }
-@keyframes num-down { from { transform: translateY(-1em); } to { transform: translateY(0); } }
-@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 
 /* ==========================================================================
    Hearth — the fireplace behind the Streak tracker
-   The canvas sits fixed under everything; panels turn faintly translucent
-   so the glow reads through them while text stays on a near-opaque surface,
-   and the page gets room at the bottom so scrolling to the end shows the
-   fire with nothing over it.
+
+   The fire itself is untouched. What changes is the UI in front of it: the
+   backdrop is always a dark scene, whatever the device theme, so this screen
+   takes the dark palette and solid panels. A light, translucent panel over
+   a black fire turned a muddy grey; a solid dark one sits in the scene and
+   keeps every line of text on an opaque ground.
    ========================================================================== */
 
 /* The canvas sits at a negative z-index inside the app's own stacking
@@ -1285,29 +1400,55 @@ button, input, textarea, select { font: inherit; color: inherit; }
   image-rendering: crisp-edges;
   pointer-events: none;
 }
-.app--hearth { position: relative; isolation: isolate; background: transparent; }
-.app--hearth .header {
-  background: color-mix(in srgb, var(--surface) 78%, transparent);
-  border-bottom-color: color-mix(in srgb, var(--border) 60%, transparent);
+
+/* The Streaks screen takes the dark palette from its first frame — before
+   WebGL has even started — so switching to it never flashes light panels
+   over the black scene. It is its own stacking context, which is what lets
+   the canvas (z-index -1) paint above this background but beneath every
+   panel. Without WebGL, it is simply a dark screen. */
+.app--streaks {
+  position: relative;
+  isolation: isolate;
+  background: var(--bg);
+  color: var(--text);
+
+  --bg: #0f1115;
+  --surface: #171a21;
+  --surface-sunken: #1f232b;
+  --surface-hover: #232832;
+  --surface-raised: #2a2f39;
+  --surface-recessed: #13161b;
+  --border: #272c35;
+  --border-strong: #363c47;
+  --text: #eceef2;
+  --text-muted: #aab2bf;
+  --text-faint: #8d96a4;
+  --text-disabled: #5a6270;
+  --accent: #7d9bff;
+  --accent-hover: #96afff;
+  --accent-soft: #1e2742;
+  --accent-ink: #0f1115;
+  --danger: #ff9189;
+  --danger-soft: #3b1d1b;
+  --danger-ink: #2a1210;
+  --warn: #f0b766;
+  --warn-soft: #33260f;
+  --ok: #7fd19e;
+  --track: #323945;
+  --seg-past: #5a6272;
+  --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.35);
+  --shadow: 0 4px 14px -2px rgb(0 0 0 / 0.45);
+  --shadow-lg: 0 18px 44px -8px rgb(0 0 0 / 0.6);
+  color-scheme: dark;
 }
+/* Page overscroll on phones matches the scene rather than flashing light. */
+html:has(.app--streaks) { background: #0f1115; }
+
+/* Room at the bottom, so scrolling to the end shows the fire unobstructed. */
 .app--hearth .main { padding-bottom: 42vh; }
 .app--hearth .calendar,
-.app--hearth .spanel {
-  background: var(--surface);
-  border-color: color-mix(in srgb, var(--border) 70%, transparent);
-  box-shadow: 0 18px 50px rgb(0 0 0 / 0.35);
-  color: var(--text);
-}
-@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
-  .app--hearth .calendar,
-  .app--hearth .spanel {
-    background: color-mix(in srgb, var(--surface) 88%, transparent);
-    backdrop-filter: blur(14px) saturate(1.15);
-    -webkit-backdrop-filter: blur(14px) saturate(1.15);
-  }
-}
-.app--hearth .srow--done { background: color-mix(in srgb, var(--surface-sunken) 70%, transparent); }
-.app--hearth .day:not(:disabled):not(.day--selected):hover { background: color-mix(in srgb, var(--surface-sunken) 80%, transparent); }
+.app--hearth .spanel { box-shadow: 0 18px 48px rgb(0 0 0 / 0.45); }
 .app--hearth .mobile-action .btn { box-shadow: 0 14px 40px rgb(0 0 0 / 0.5); }
 
 /* ==========================================================================
@@ -1324,32 +1465,31 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .auth__card {
   width: 100%;
   max-width: 380px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  padding: 28px 24px 24px;
   box-shadow: var(--shadow);
-  padding: 30px 26px 26px;
 }
 .auth__brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 22px;
-  font-size: 16px;
-  font-weight: 650;
+  margin-bottom: 24px;
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
-.auth__title { font-size: 20px; font-weight: 680; letter-spacing: -0.015em; }
-.auth__subtitle { color: var(--text-muted); font-size: 14px; margin: 5px 0 22px; }
+.auth__brand .header__mark { width: 28px; height: 28px; border-radius: 8px; }
+.auth__title { font-size: var(--fs-xl); font-weight: 700; letter-spacing: -0.02em; }
+.auth__subtitle { margin: 6px 0 24px; color: var(--text-muted); font-size: var(--fs-md); }
 .auth__switch {
-  margin-top: 18px;
+  margin-top: 20px;
   text-align: center;
-  font-size: 14px;
   color: var(--text-muted);
+  font-size: var(--fs-md);
 }
 .auth__link {
-  background: none;
-  border: none;
   padding: 0;
+  border: none;
+  background: none;
   color: var(--accent);
   font-weight: 600;
   cursor: pointer;
@@ -1358,15 +1498,36 @@ button, input, textarea, select { font: inherit; color: inherit; }
 
 .auth__info {
   margin-bottom: 14px;
-  padding: 11px 13px;
+  padding: 10px 12px;
   border-radius: var(--radius);
   background: var(--accent-soft);
   color: var(--accent);
-  font-size: 13.5px;
+  font-size: var(--fs-sm);
 }
 
 /* ==========================================================================
-   Responsive - the mobile layout is arranged for thumbs, not just narrowed
+   Motion — short, purposeful, and switched off for reduced motion
+   ========================================================================== */
+
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes overlay-in { from { opacity: 0; } }
+@keyframes modal-in { from { opacity: 0; transform: translateY(8px) scale(0.985); } }
+@keyframes sheet-in { from { opacity: 0; transform: translateY(32px); } }
+@keyframes menu-in { from { opacity: 0; transform: translateY(-4px); } }
+@keyframes toast-in {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+@keyframes num-up { from { transform: translateY(0); } to { transform: translateY(-1em); } }
+@keyframes num-down { from { transform: translateY(-1em); } to { transform: translateY(0); } }
+@keyframes day-pulse {
+  0% { opacity: 0.55; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.22); }
+}
+@keyframes srow-sweep { to { transform: translateX(100%); } }
+
+/* ==========================================================================
+   Responsive — the mobile layout is arranged for thumbs, not just narrowed
    ========================================================================== */
 
 .mobile-action { display: none; }
@@ -1379,30 +1540,55 @@ button, input, textarea, select { font: inherit; color: inherit; }
 }
 
 @media (max-width: 700px) {
-  body { font-size: 15.5px; }
+  /* A touch larger on a phone held at arm's length. */
+  :root { --fs-md: 15px; --fs-sm: 14px; }
 
   .header { padding: 0 14px; gap: 10px; }
   .header__brand span { display: none; }
   .header__email { display: none; }
-  .tabs { flex: 1; }
-  .tab { flex: 1; padding: 7px 10px; }
+  .header .tabs { flex: 1; }
+  .header .tab { flex: 1; padding: 0 10px; }
 
-  .main { padding: 18px 14px 104px; }
+  .main { padding: 16px 14px 104px; }
 
-  .toolbar { gap: 8px; }
-  .toolbar .select { flex: 1; }
+  /* The view switch gets its own full-width row; the trimester and the
+     subject action share the next one. */
+  .toolbar { gap: 8px; margin-bottom: 16px; }
+  .toolbar .tabs { flex: 1 1 100%; }
+  .toolbar .tab { flex: 1; }
+  .toolbar .select { flex: 1; min-width: 0; }
+  /* The select takes the free width; a spacer competing for it squeezed
+     the trimester name down to a few letters. */
+  .toolbar .toolbar__spacer { display: none; }
 
-  .subject-grid { grid-template-columns: 1fr; gap: 13px; }
+  .subject-grid { grid-template-columns: 1fr; gap: 12px; }
 
+  /* Below 16px, iOS Safari zooms the whole page when a field is focused. */
+  .input, .textarea, .select { font-size: 16px; }
   .field-pair { grid-template-columns: 1fr 1fr; }
 
+  /* Needs attention: the date moves under the title instead of squeezing
+     the task name down to a few letters. */
+  .focus { padding: 12px 12px 4px; }
+  .focus-row {
+    grid-template-columns: auto auto minmax(0, 1fr);
+    padding: 4px 0 8px;
+  }
+  .focus-row__title { grid-column: 3; grid-row: 1; white-space: normal; }
+  .focus-row > .chip { grid-column: 3; grid-row: 2; justify-self: start; margin-top: -6px; }
+
+  /* Dialogs become bottom sheets, anchored within reach of the thumb. */
+  .overlay { padding: 0; align-items: flex-end; }
   .modal {
     max-width: none;
-    max-height: calc(100dvh - 24px);
+    max-height: 92dvh;
+    border-bottom: 0;
+    border-radius: 18px 18px 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    animation: sheet-in 0.26s var(--ease);
   }
-  .overlay { padding: 12px; align-items: flex-end; }
 
-  .day { min-height: 40px; font-size: 13.5px; }
+  .day { min-height: 40px; font-size: var(--fs-sm); }
   .calendar { padding: 12px; }
   .srow__count-label { display: none; }
   .srow { padding-left: 4px; padding-right: 4px; column-gap: 10px; }
@@ -1418,7 +1604,8 @@ button, input, textarea, select { font: inherit; color: inherit; }
     z-index: 30;
   }
   .mobile-action .btn {
-    min-height: 50px;
+    min-height: var(--control-lg);
+    border-radius: 12px;
     font-size: 15px;
     box-shadow: var(--shadow-lg);
   }

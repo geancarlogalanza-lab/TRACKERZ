@@ -48,7 +48,16 @@ export default function App() {
   if (!user) return <AuthScreen />
 
   return (
-    <div className={`app${showHearth && hearth ? ' app--hearth' : ''}`}>
+    <div
+      className={[
+        'app',
+        // The Streaks screen is dark from its first frame, fire or no fire.
+        showHearth ? 'app--streaks' : '',
+        showHearth && hearth ? 'app--hearth' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       {showHearth && <Fireplace onReady={onHearthReady} />}
       <header className="header">
         <div className="header__brand">

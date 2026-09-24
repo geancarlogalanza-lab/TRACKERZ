@@ -27,6 +27,9 @@ const EDGE = 8
 export function Menu({ label, items }: { label: string; items: MenuItem[] }) {
   const [open, setOpen] = useState(false)
   const [style, setStyle] = useState<CSSProperties | null>(null)
+  // Where the list renders: resolved when the menu opens (an event, where
+  // reading the DOM is allowed), never during render.
+  const [portalTarget, setPortalTarget] = useState<Element | null>(null)
   const anchorRef = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
@@ -75,11 +78,19 @@ export function Menu({ label, items }: { label: string; items: MenuItem[] }) {
 
   return (
     <div className="menu" ref={anchorRef}>
-      <IconButton label={label} aria-expanded={open} onClick={() => setOpen((value) => !value)}>
+      <IconButton
+        label={label}
+        aria-expanded={open}
+        onClick={() => {
+          setPortalTarget(anchorRef.current?.closest('.app') ?? document.body)
+          setOpen((value) => !value)
+        }}
+      >
         <MoreIcon />
       </IconButton>
 
       {open &&
+        portalTarget &&
         createPortal(
           <div
             className="menu__list"
@@ -104,7 +115,9 @@ export function Menu({ label, items }: { label: string; items: MenuItem[] }) {
               </button>
             ))}
           </div>,
-          document.body,
+          // Inside the app root, not <body>: the menu then takes the palette of
+          // the screen it opens on (the Streak tracker is always dark).
+          portalTarget,
         )}
     </div>
   )
