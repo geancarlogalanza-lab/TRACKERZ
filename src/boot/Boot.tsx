@@ -37,6 +37,22 @@ const STALL_MS = 25_000
 const RELOAD_AFTER = 3
 
 /**
+ * The shortest time the loading screen stays up, from when it first
+ * appears, so a quick start still gives the fire room to breathe. A slower
+ * start is unaffected: the screen simply stays until the app is ready.
+ */
+const MIN_VISIBLE_MS = 2300
+
+/** How long the loading screen has been on screen. */
+function visibleFor(): number {
+  // The static first frame in index.html is the page's first paint.
+  const firstPaint = performance.getEntriesByName('first-contentful-paint')[0]
+  return performance.now() - (firstPaint?.startTime ?? 0)
+}
+
+const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+/**
  * The address of a script that failed to download, from the browser's error
  * (Chrome and Firefox name it; Safari does not). Browsers remember a failed
  * import for the life of the page, so the same address can never be tried
@@ -128,11 +144,28 @@ export function Boot() {
     setCrashed(true)
   }, [])
 
+  // Held open for the minimum time even once the app is ready — except for
+  // anyone who prefers reduced motion, for whom the fire is still anyway.
+  const [minimumMet, setMinimumMet] = useState(
+    () => prefersReducedMotion() || visibleFor() >= MIN_VISIBLE_MS,
+  )
+  useEffect(() => {
+    if (minimumMet) return
+    let timer = setTimeout(function check() {
+      const left = MIN_VISIBLE_MS - visibleFor()
+      if (left > 16) timer = setTimeout(check, left)
+      else setMinimumMet(true)
+    }, MIN_VISIBLE_MS - visibleFor())
+    return () => clearTimeout(timer)
+  }, [minimumMet])
+
   const stage: Stage = App ? step : 'code'
   const failed = (!App && codeError) || report.step === 'failed' || stalled
+  // Until the minimum has passed, a ready app keeps the screen in 'loading'
+  // at 'ready' progress: the fire keeps burning, full, as it already would.
   const phase: LoaderPhase = crashed
     ? 'error'
-    : stage === 'ready'
+    : stage === 'ready' && minimumMet
       ? 'complete'
       : failed
         ? 'error'
