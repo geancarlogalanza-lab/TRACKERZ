@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import type { BootReport } from './boot/bootReport'
 import { AuthScreen } from './components/AuthScreen'
 import { PendingTracker } from './components/pending/PendingTracker'
 import { Fireplace } from './components/streaks/Fireplace'
@@ -14,7 +15,12 @@ import { isConfigured, supabase } from './lib/supabase'
 
 type Tab = 'pending' | 'streaks'
 
-export default function App() {
+interface AppProps {
+  /** Receives each start-up step, so the loading screen can show real progress. */
+  onBoot?: (report: BootReport) => void
+}
+
+export default function App({ onBoot }: AppProps = {}) {
   const { user, loading } = useAuth()
   const [tab, setTab] = useState<Tab>('pending')
   const toast = useToast()
@@ -29,6 +35,28 @@ export default function App() {
   // Hooks run unconditionally; they stay idle until there is a signed-in user.
   const pending = usePendingTracker(user?.id ?? null, toast.show)
   const streaks = useStreakTracker(user?.id ?? null)
+
+  // Start-up, as the loading screen sees it. Only what the first screen needs
+  // counts: the session, then the workspace and its tasks. Streaks load in
+  // the background and handle their own failures, so they never block entry.
+  const bootStep: BootReport['step'] = !isConfigured
+    ? 'ready'
+    : loading
+      ? 'session'
+      : !user
+        ? 'ready'
+        : pending.loadError
+          ? 'failed'
+          : pending.trimesters.length === 0
+            ? 'workspace'
+            : pending.loading
+              ? 'content'
+              : 'ready'
+  const bootRetry = user ? pending.retry : undefined
+  const bootMessage = pending.loadError ?? undefined
+  useEffect(() => {
+    onBoot?.({ step: bootStep, message: bootMessage, retry: bootRetry })
+  }, [onBoot, bootStep, bootMessage, bootRetry])
 
   if (!isConfigured) {
     return (

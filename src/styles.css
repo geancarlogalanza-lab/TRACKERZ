@@ -1615,3 +1615,76 @@ html:has(.app--streaks) { background: #0f1115; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+/* ==========================================================================
+   Loading screen — GEAN
+   The stage's layout is inlined into index.html from src/lib/gean.ts, so the
+   static first paint and the canvas agree before this sheet has loaded. What
+   follows only dresses what appears later: the caption, the error, the exit.
+   ========================================================================== */
+
+.gean-meter { display: block; }
+.gean-loader { transition: opacity var(--gean-fade, 240ms) ease; }
+.gean-loader .gean-art { transition: transform var(--gean-fade, 240ms) var(--ease); }
+.gean-loader--leaving { opacity: 0; pointer-events: none; }
+.gean-loader--leaving .gean-art { transform: scale(1.015); }
+/* An error needs more room below GEAN than a caption: lift the letters. */
+.gean-loader .gean-center { transition: transform 0.45s var(--ease); }
+.gean-loader--error .gean-center { transform: translateY(clamp(-72px, -9vh, -36px)); }
+/* If the canvas cannot draw, the static letters from index.html show through. */
+.gean-loader[data-flat] { background: transparent; }
+.gean-loader[data-flat] .gean-art { visibility: hidden; }
+
+/* Beneath the letters, positioned out of flow so GEAN stays exactly centred. */
+.gean-below {
+  position: absolute;
+  top: calc(100% + clamp(22px, 4.5vh, 44px));
+  left: 50%;
+  width: min(88vw, 400px);
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.gean-caption {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #8a8e98;
+  animation: gean-rise-in 0.5s ease-out both;
+}
+
+.gean-error {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  animation: gean-rise-in 0.35s ease-out both;
+}
+.gean-error__title { margin: 0; font-size: 16px; font-weight: 600; color: #eceef2; }
+.gean-error__body {
+  max-width: 36ch;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #a3a8b3;
+}
+.gean-error__retry {
+  margin-top: 12px;
+  min-height: 40px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 10px;
+  background: #e2672d;
+  color: #170a04;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.12s var(--ease);
+}
+.gean-error__retry:hover { filter: brightness(1.08); }
+.gean-error__retry:active { transform: scale(0.98); }
+.gean-error__retry:focus-visible { outline: 2px solid #f0b766; outline-offset: 3px; }
+
+@keyframes gean-rise-in { from { opacity: 0; transform: translateY(4px); } }

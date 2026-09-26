@@ -18,8 +18,25 @@
     <meta name="mobile-web-app-capable" content="yes" />
 
     <title>Tracker</title>
+    <!--gean-stage-css-->
   </head>
   <body>
+    <!-- The loading screen's first frame, inlined at build time from src/lib/gean.ts. -->
+    <!--gean-shell-->
+    <script>
+      // Safety net: if the app's code never arrives, don't leave empty letters
+      // on screen forever. The app sets __geanBooted the moment it starts.
+      setTimeout(function () {
+        if (window.__geanBooted) return
+        var center = document.querySelector('#gean-shell .gean-center')
+        if (!center) return
+        var note = document.createElement('div')
+        note.className = 'gean-fallback'
+        note.innerHTML = '<p>Couldn’t load. Check your connection, then reload.</p><button type="button">Reload</button>'
+        note.querySelector('button').onclick = function () { location.reload() }
+        center.appendChild(note)
+      }, 20000)
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
