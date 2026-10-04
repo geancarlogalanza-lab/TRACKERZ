@@ -30,10 +30,13 @@ or moving a task moves the calendar with it and the two cannot disagree.
 
 **Streaks** — a Today panel and a month calendar. Continue a streak with one tap,
 then write whatever you like about the day if you want to. The text is stored
-as written and never read by the app: a streak counts consecutive days you
-chose to continue it, nothing more. A streak is continued on the day it
-happens — a missed day can't be filled in later, and a streak that ends says
-"Last streak 8 days · Start again" rather than anything harsher.
+as written and never read by the app: a streak counts the days you chose to
+continue it, nothing more. It survives up to two missed days in a row —
+continue it after them and it carries on, one day longer — but three missed
+days in a row end it.
+A streak is continued on the day it happens — a missed day can't be filled
+in later, and a streak that ends says "Last streak 8 days · Start again"
+rather than anything harsher.
 
 Each calendar day carries one mark: a short bar with a segment per streak
 that existed that day, each streak always in the same position. A segment is

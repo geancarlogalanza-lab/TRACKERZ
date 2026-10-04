@@ -9,7 +9,7 @@ import type { Streak, StreakRecord } from '../../data/types'
 export type RowState =
   /** Continued on this day. */
   | 'done'
-  /** Owed today: the run reaches yesterday. */
+  /** Owed today: the run is still alive. */
   | 'needs'
   /** No run leading in. Start again, or start for the first time. */
   | 'restart'
