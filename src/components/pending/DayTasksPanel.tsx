@@ -13,7 +13,7 @@ interface DayTasksPanelProps {
   /** Absent when there are no subjects yet to hang a task on. */
   onAddTask?: () => void
   onEditTask: (task: Task) => void
-  onCompleteTask: (taskId: string) => void
+  onCompleteTask: (taskId: string, origin?: Element) => void
 }
 
 /**
@@ -62,7 +62,7 @@ export function DayTasksPanel({
         key={task.id}
         task={task}
         subject={subjectsById.get(task.subject_id)}
-        onComplete={() => onCompleteTask(task.id)}
+        onComplete={(origin) => onCompleteTask(task.id, origin)}
         onEdit={() => onEditTask(task)}
       />
     ))

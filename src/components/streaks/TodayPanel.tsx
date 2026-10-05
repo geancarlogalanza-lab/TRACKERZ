@@ -17,7 +17,7 @@ interface TodayPanelProps {
   /** The streak being spotlighted on the calendar, if any. */
   focusStreakId: string | null
   onFocusStreak: (streakId: string | null) => void
-  onContinue: (streak: Streak) => Promise<void>
+  onContinue: (streak: Streak, origin: HTMLElement) => Promise<void>
   onUndo: (record: StreakRecord) => Promise<void>
   onSaveNote: (record: StreakRecord, note: string) => Promise<void>
   onNewStreak: () => void
@@ -113,7 +113,11 @@ export function TodayPanel({
         <>
           <div className="spanel__rows">
             {ordered.map((streak) => {
-              const standing = standings.get(streak.id) ?? { state: 'restart' as const, count: 0 }
+              const standing = standings.get(streak.id) ?? {
+                state: 'restart' as const,
+                count: 0,
+                lastDay: false,
+              }
               const record = recordsToday.get(streak.id)
               return (
                 <StreakRow
@@ -121,13 +125,14 @@ export function TodayPanel({
                   streak={streak}
                   state={standing.state}
                   count={standing.count}
+                  lastDay={standing.lastDay}
                   record={record}
                   mode="today"
                   celebrate={celebrating === streak.id}
                   inviteNote={justContinued === streak.id}
                   focused={focusStreakId === streak.id}
                   onFocus={onFocusStreak}
-                  onContinue={() => onContinue(streak)}
+                  onContinue={(origin) => onContinue(streak, origin)}
                   onUndo={record ? () => onUndo(record) : undefined}
                   onSaveNote={record ? (note) => onSaveNote(record, note) : undefined}
                   onRename={() => onRename(streak)}

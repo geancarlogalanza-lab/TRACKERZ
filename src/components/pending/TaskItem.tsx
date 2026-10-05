@@ -7,7 +7,8 @@ interface TaskItemProps {
   task: Task
   /** Shown when the surrounding context does not already name the subject. */
   subject?: Subject
-  onComplete: () => void
+  /** Receives the check that was pressed, so the ember rises from it. */
+  onComplete: (origin: Element) => void
   onEdit: () => void
 }
 
@@ -25,7 +26,7 @@ export function TaskItem({ task, subject, onComplete, onEdit }: TaskItemProps) {
       <button
         type="button"
         className="task__complete"
-        onClick={onComplete}
+        onClick={(event) => onComplete(event.currentTarget.firstElementChild ?? event.currentTarget)}
         aria-label={`Complete "${task.title}"`}
         title="Mark complete"
       >

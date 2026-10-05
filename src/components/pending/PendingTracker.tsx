@@ -11,6 +11,8 @@ import { SubjectCard } from './SubjectCard'
 import { SubjectForm } from './SubjectForm'
 import { TaskForm } from './TaskForm'
 import { deadlineState, today as todayISO } from '../../lib/dates'
+import { ember } from '../../lib/ember'
+import { needsAttention } from '../../lib/focus'
 import { indexTasksByDay } from '../../lib/taskCalendar'
 import { plural } from '../../lib/plural'
 import type { usePendingTracker } from '../../hooks/usePendingTracker'
@@ -84,6 +86,19 @@ export function PendingTracker({ store }: { store: ReturnType<typeof usePendingT
       )
     return [...subjects].sort((a, b) => Number(hasOverdue(b)) - Number(hasOverdue(a)))
   }, [subjects, tasksBySubject])
+
+  /**
+   * Finishing a task lights a small ember at its check. Finishing the last
+   * thing that needed attention lights a larger one: the list is clear.
+   */
+  const completeTask = (taskId: string, origin?: Element) => {
+    if (origin) {
+      const pressing = tasks.filter((task) => needsAttention(task, today))
+      const clearsList = pressing.length === 1 && pressing[0].id === taskId
+      ember(origin, clearsList ? 'blaze' : 'flick')
+    }
+    void store.completeTask(taskId)
+  }
 
   const startNewTask = (plannedDate?: ISODate) => {
     if (subjects.length > 0) setDialog({ kind: 'new-task', subjectId: subjects[0].id, plannedDate })
@@ -183,7 +198,7 @@ export function PendingTracker({ store }: { store: ReturnType<typeof usePendingT
               subjectsById={subjectsById}
               onAddTask={subjects.length > 0 ? () => startNewTask(selectedDay) : undefined}
               onEditTask={(task) => setDialog({ kind: 'edit-task', task })}
-              onCompleteTask={store.completeTask}
+              onCompleteTask={completeTask}
             />
           </div>
         </div>
@@ -194,7 +209,7 @@ export function PendingTracker({ store }: { store: ReturnType<typeof usePendingT
           <FocusStrip
             tasks={tasks}
             subjectsById={subjectsById}
-            onCompleteTask={store.completeTask}
+            onCompleteTask={completeTask}
           />
 
           {subjects.length === 0 ? (
@@ -217,7 +232,7 @@ export function PendingTracker({ store }: { store: ReturnType<typeof usePendingT
                   tasks={tasksBySubject.get(subject.id) ?? []}
                   onAddTask={() => setDialog({ kind: 'new-task', subjectId: subject.id })}
                   onEditTask={(task) => setDialog({ kind: 'edit-task', task })}
-                  onCompleteTask={store.completeTask}
+                  onCompleteTask={completeTask}
                   onEditSubject={() => setDialog({ kind: 'edit-subject', subject })}
                   onDeleteSubject={() => setDialog({ kind: 'delete-subject', subject })}
                 />

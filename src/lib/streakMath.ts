@@ -95,17 +95,25 @@ export interface TodayStanding {
   state: TodayState
   /** The run to show: through today when done, the live run when owed, the last run when restarting. */
   count: number
+  /** Owed, and the grace is used up: missing today ends the run. */
+  lastDay: boolean
 }
 
 /** Where a streak stands on `day`, phrased for the Today panel. */
 export function standingOn(dates: Set<ISODate>, day: ISODate): TodayStanding {
   const throughToday = runEndingOn(dates, day)
-  if (throughToday > 0) return { state: 'done', count: throughToday }
+  if (throughToday > 0) return { state: 'done', count: throughToday, lastDay: false }
 
   const latest = previousInRun(dates, day)
-  if (latest) return { state: 'needs', count: runEndingOn(dates, latest) }
+  if (latest) {
+    return {
+      state: 'needs',
+      count: runEndingOn(dates, latest),
+      lastDay: latest === addDays(day, -(GRACE_DAYS + 1)),
+    }
+  }
 
-  return { state: 'restart', count: lastRunBefore(dates, day) }
+  return { state: 'restart', count: lastRunBefore(dates, day), lastDay: false }
 }
 
 export interface DayRange {

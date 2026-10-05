@@ -10,7 +10,7 @@ interface SubjectCardProps {
   tasks: Task[]
   onAddTask: () => void
   onEditTask: (task: Task) => void
-  onCompleteTask: (taskId: string) => void
+  onCompleteTask: (taskId: string, origin?: Element) => void
   onEditSubject: () => void
   onDeleteSubject: () => void
 }
@@ -57,7 +57,7 @@ export function SubjectCard({
             <TaskItem
               key={task.id}
               task={task}
-              onComplete={() => onCompleteTask(task.id)}
+              onComplete={(origin) => onCompleteTask(task.id, origin)}
               onEdit={() => onEditTask(task)}
             />
           ))}

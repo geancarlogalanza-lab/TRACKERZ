@@ -1,11 +1,13 @@
 import { CheckIcon } from '../ui/Icons'
 import { deadlineState, formatMoment, today } from '../../lib/dates'
+import { needsAttention } from '../../lib/focus'
 import type { Subject, Task } from '../../data/types'
 
 interface FocusStripProps {
   tasks: Task[]
   subjectsById: Map<string, Subject>
-  onCompleteTask: (taskId: string) => void
+  /** `origin` is the check that was pressed, for the ember. */
+  onCompleteTask: (taskId: string, origin?: Element) => void
 }
 
 /**
@@ -18,10 +20,7 @@ export function FocusStrip({ tasks, subjectsById, onCompleteTask }: FocusStripPr
   const now = today()
 
   const urgent = tasks
-    .filter((task) => {
-      const state = deadlineState(task.deadline_date, task.deadline_time)
-      return state === 'overdue' || state === 'today' || task.planned_date === now
-    })
+    .filter((task) => needsAttention(task, now))
     .sort((a, b) => {
       const rank = (task: Task) =>
         deadlineState(task.deadline_date, task.deadline_time) === 'overdue' ? 0 : 1
@@ -49,7 +48,9 @@ export function FocusStrip({ tasks, subjectsById, onCompleteTask }: FocusStripPr
               <button
                 type="button"
                 className="task__complete"
-                onClick={() => onCompleteTask(task.id)}
+                onClick={(event) =>
+                  onCompleteTask(task.id, event.currentTarget.firstElementChild ?? event.currentTarget)
+                }
                 aria-label={`Complete "${task.title}"`}
                 title="Mark complete"
               >

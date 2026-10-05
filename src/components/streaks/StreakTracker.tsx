@@ -7,6 +7,7 @@ import { Calendar, type DaySegment } from './Calendar'
 import { DayDetails } from './DayDetails'
 import { TodayPanel } from './TodayPanel'
 import { today as todayISO } from '../../lib/dates'
+import { aim, ember } from '../../lib/ember'
 import {
   activeRunOn,
   datesForStreak,
@@ -117,22 +118,31 @@ export function StreakTracker({ store }: { store: ReturnType<typeof useStreakTra
     timers.current.push(setTimeout(fn, ms))
   }
 
-  const handleContinue = async (streak: Streak) => {
+  const handleContinue = async (streak: Streak, origin: HTMLElement) => {
     const standing = standings.get(streak.id)
     const nextCount = standing?.state === 'needs' ? standing.count + 1 : 1
     const stillOwed = streaks.filter((item) => standings.get(item.id)?.state !== 'done').length
+    const milestone = isMilestone(nextCount)
+    const secured = stillOwed === 1
+    // Aimed now, lit once the save succeeds — with the count, not before it.
+    const ignite = aim(origin)
 
     await store.continueStreak(streak.id)
     setJustContinued(streak.id)
+    // Moments that close something burn a little bigger.
+    ignite(milestone || secured ? 'blaze' : 'kindle', { anchor: 0.85 })
 
-    if (isMilestone(nextCount)) {
+    if (milestone) {
       setCelebrating(streak.id)
       later(() => setCelebrating(null), 900)
     }
     // That was the last one: today is secured, and the cell gets one ring.
-    if (stillOwed === 1) {
+    if (secured) {
       setPulse(true)
       later(() => setPulse(false), 1200)
+      // The day itself catches as the ring goes round.
+      const track = document.querySelector('.calendar .day--today .day__track')
+      if (track) ember(track, 'flick', { delay: 420, anchor: 0.5 })
     }
   }
 

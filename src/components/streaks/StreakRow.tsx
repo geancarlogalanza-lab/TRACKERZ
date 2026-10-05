@@ -21,6 +21,8 @@ interface StreakRowProps {
   state: RowState
   /** The run to show: live for done/needs, the previous run for restart. */
   count: number
+  /** Owed, and missing today would end the run. */
+  lastDay?: boolean
   record?: StreakRecord
   /** Today's rows carry actions; history rows are read-only apart from the note. */
   mode: 'today' | 'history'
@@ -32,7 +34,8 @@ interface StreakRowProps {
   focused?: boolean
   /** Spotlight this streak on the calendar (hover, or tap the name), or clear. */
   onFocus?: (streakId: string | null) => void
-  onContinue?: () => Promise<void>
+  /** Receives the button that was pressed, so the ember rises from it. */
+  onContinue?: (origin: HTMLElement) => Promise<void>
   onUndo?: () => Promise<void>
   onSaveNote?: (note: string) => Promise<void>
   onRename?: () => void
@@ -48,6 +51,7 @@ export function StreakRow({
   streak,
   state,
   count,
+  lastDay = false,
   record,
   mode,
   celebrate = false,
@@ -140,19 +144,34 @@ export function StreakRow({
           )
         )}
 
+        {/* Only on the final grace day, so the slack itself is never advertised. */}
+        {mode === 'today' && state === 'needs' && lastDay && (
+          <span className="srow__lastday">Last day</span>
+        )}
+
         {mode === 'today' && state === 'needs' && onContinue && (
           <Button
             variant="primary"
             size="sm"
             disabled={busy}
-            onClick={() => run(onContinue, 'Could not continue that streak.')}
+            onClick={(event) => {
+              const origin = event.currentTarget
+              run(() => onContinue(origin), 'Could not continue that streak.')
+            }}
           >
             Continue
           </Button>
         )}
 
         {mode === 'today' && state === 'restart' && onContinue && (
-          <Button size="sm" disabled={busy} onClick={() => run(onContinue, 'Could not start that streak.')}>
+          <Button
+            size="sm"
+            disabled={busy}
+            onClick={(event) => {
+              const origin = event.currentTarget
+              run(() => onContinue(origin), 'Could not start that streak.')
+            }}
+          >
             {actionLabel}
           </Button>
         )}

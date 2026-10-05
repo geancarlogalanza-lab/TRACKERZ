@@ -68,6 +68,8 @@
   --shadow-lg: 0 16px 40px -8px rgb(16 24 40 / 0.22), 0 4px 10px -4px rgb(16 24 40 / 0.08);
 
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  /* How an ember meets the surface under it: see "Ember" below. */
+  --ember-blend: normal;
   --header-h: 56px;
   --content: 1120px;
   color-scheme: light;
@@ -107,6 +109,7 @@
     --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.35);
     --shadow: 0 4px 14px -2px rgb(0 0 0 / 0.45);
     --shadow-lg: 0 18px 44px -8px rgb(0 0 0 / 0.6);
+    --ember-blend: screen;
     color-scheme: dark;
   }
 }
@@ -1327,6 +1330,8 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .srow__count--last .num { font-size: var(--fs-lg); font-weight: 600; }
 .srow__count-label { margin-right: 2px; font-size: var(--fs-xs); color: var(--text-faint); }
 .srow__quiet { font-size: var(--fs-sm); color: var(--text-faint); }
+/* The final grace day: worded, warm, never red. */
+.srow__lastday { font-size: var(--fs-xs); font-weight: 600; color: var(--warn); white-space: nowrap; }
 .srow__error { grid-area: error; margin: 0; font-size: var(--fs-sm); color: var(--danger); }
 
 .srow__note { grid-area: note; min-width: 0; }
@@ -1440,10 +1445,30 @@ button, input, textarea, select { font: inherit; color: inherit; }
   --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.35);
   --shadow: 0 4px 14px -2px rgb(0 0 0 / 0.45);
   --shadow-lg: 0 18px 44px -8px rgb(0 0 0 / 0.6);
+  --ember-blend: screen;
   color-scheme: dark;
 }
 /* Page overscroll on phones matches the scene rather than flashing light. */
 html:has(.app--streaks) { background: #0f1115; }
+
+/* ==========================================================================
+   Ember — the fire that answers a meaningful action (src/lib/ember.ts)
+   The hearth's grain and colours, at the scale of a button. On dark
+   surfaces it is screened, so it reads as light; on light ones the fire
+   carries its own opacity instead. It never takes a click.
+   ========================================================================== */
+
+.ember {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 900;
+  pointer-events: none;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  mix-blend-mode: screen;
+}
+.ember--light { mix-blend-mode: normal; }
 
 /* Room at the bottom, so scrolling to the end shows the fire unobstructed. */
 .app--hearth .main { padding-bottom: 42vh; }
