@@ -4,7 +4,7 @@
  */
 
 /** Bump when the instructions change, so stored results say which ones produced them. */
-export const PROMPT_VERSION = 'reading-v1'
+export const PROMPT_VERSION = 'reading-v2'
 
 export type Origin = 'author' | 'mine' | 'mixed'
 export type FlagType = 'unsupported_leap' | 'contradiction'
@@ -111,9 +111,10 @@ export function buildManualPrompt(capture: CaptureInput): string {
   return [
     SYSTEM_PROMPT,
     '',
-    'Answer with only a JSON object and no other text, in exactly this shape:',
+    'Answer with only a JSON object in one code block and no other text, in exactly this shape:',
     '{"lessons": [{"lesson": "...", "origin": "author" | "mine" | "mixed", "basis": "...", ' +
       '"interpretation": "..." or null, "flags": [{"type": "unsupported_leap" | "contradiction", "note": "..."}]}]}',
+    "Inside the text values, use single quotes ('like this') rather than double quotes.",
     '',
     buildUserMessage(capture),
   ].join('\n')
@@ -128,14 +129,57 @@ export function parseReply(reply: string): ProcessingResult | null {
   const start = reply.indexOf('{')
   const end = reply.lastIndexOf('}')
   if (start === -1 || end <= start) return null
-  try {
-    return validateResult(JSON.parse(reply.slice(start, end + 1)))
-  } catch {
-    return null
+  const json = reply.slice(start, end + 1)
+  for (const candidate of [json, repairJson(json)]) {
+    try {
+      return validateResult(JSON.parse(candidate))
+    } catch {
+      // Try the repaired text next.
+    }
   }
+  return null
 }
 
-const MAX_LESSONS = 12
+/** The answer's field names: what separates a quote that ends a field from one inside a sentence. */
+const FIELDS = 'lessons|lesson|origin|basis|interpretation|flags|type|note'
+const ENDS_A_STRING = new RegExp(`^\\s*(?::|\\}|\\]|,\\s*"(?:${FIELDS})"\\s*:)`)
+
+/**
+ * A reply copied from a chat's formatted text, rather than its code box,
+ * loses the backslashes that protect quote marks inside a sentence, and can
+ * carry raw line breaks. Both make it invalid JSON. Knowing the field names,
+ * a quote that doesn't end a field is escaped again, and a line break inside
+ * text becomes \n.
+ */
+function repairJson(json: string): string {
+  let out = ''
+  let inString = false
+  for (let i = 0; i < json.length; i += 1) {
+    const ch = json[i]
+    if (!inString) {
+      if (ch === '"') inString = true
+      out += ch
+    } else if (ch === '\\') {
+      out += ch + (json[i + 1] ?? '')
+      i += 1
+    } else if (ch === '"') {
+      if (ENDS_A_STRING.test(json.slice(i + 1))) {
+        inString = false
+        out += ch
+      } else {
+        out += '\\"'
+      }
+    } else if (ch === '\n') {
+      out += '\\n'
+    } else if (ch !== '\r') {
+      out += ch
+    }
+  }
+  return out
+}
+
+/** A guard against runaway output, not a target: long notes can hold many lessons. */
+const MAX_LESSONS = 40
 
 const text = (value: unknown): string | null =>
   typeof value === 'string' && value.trim() ? value.trim() : null

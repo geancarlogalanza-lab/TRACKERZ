@@ -41,6 +41,12 @@ export function ClaudeHandoff({ capture, onApply, onDone, onClose }: ClaudeHando
   const submit = async () => {
     setError(null)
     if (!reply.trim()) return setError("Paste Claude's reply first.")
+    // The copied instructions fence the notes in <notes>; Claude's answer never does.
+    if (reply.includes('<notes>')) {
+      return setError(
+        "That's the text you copied for Claude, not Claude's answer. Paste it into a new chat on claude.ai, send it, then paste Claude's reply here.",
+      )
+    }
     setBusy(true)
     try {
       await onApply(reply)
