@@ -30,4 +30,34 @@ export type TaskInput = Pick<
 
 export type SubjectInput = Pick<Subject, 'name' | 'color'>
 
+// --- Reading ------------------------------------------------------------------
+
+/** One sitting's raw notes on a book, and what Claude proposed from them. */
+export type Capture = Tables['captures']['Row']
+export type CaptureStatus = 'queued' | 'processing' | 'needs_review' | 'reviewed' | 'failed'
+export type CaptureInput = Pick<
+  Capture,
+  'book_title' | 'book_author' | 'raw_notes' | 'source_passage' | 'location'
+>
+
+/** Whose idea a lesson is: the author's, the reader's own, or the reader building on the author. */
+export type LessonOrigin = 'author' | 'mine' | 'mixed'
+export type LessonFlag = { type: 'unsupported_leap' | 'contradiction'; note: string }
+/** How a proposal became a lesson during review. */
+export type LessonDecision = 'kept' | 'edited' | 'original' | 'kept_anyway'
+
+/** A lesson Claude proposed, as stored in `captures.ai_result`. */
+export interface ProposedLesson {
+  lesson: string
+  origin: LessonOrigin
+  basis: string
+  interpretation: string | null
+  flags: LessonFlag[]
+}
+
+/** A kept lesson, with the book it came from. */
+export type Lesson = Tables['lessons']['Row'] & {
+  captures: Pick<Capture, 'book_title' | 'book_author' | 'location'> | null
+}
+
 export type { Database }

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Button } from '../ui/Button'
 import { PlusIcon } from '../ui/Icons'
 import { Menu } from '../ui/Menu'
@@ -38,9 +38,16 @@ function byUrgency(a: Task, b: Task) {
   return compared !== 0 ? compared : a.created_at.localeCompare(b.created_at)
 }
 
-export function PendingTracker({ store }: { store: ReturnType<typeof usePendingTracker> }) {
+interface PendingTrackerProps {
+  store: ReturnType<typeof usePendingTracker>
+  /** Which College section is showing: Tasks (the subject grid) or Calendar. */
+  view: 'subjects' | 'calendar'
+  /** The College section switch, which leads this screen's toolbar. */
+  nav: ReactNode
+}
+
+export function PendingTracker({ store, view, nav }: PendingTrackerProps) {
   const [dialog, setDialog] = useState<Dialog>(null)
-  const [view, setView] = useState<'subjects' | 'calendar'>('subjects')
   const today = todayISO()
   const [selectedDay, setSelectedDay] = useState<ISODate>(today)
   const [month, setMonth] = useState(() => {
@@ -107,26 +114,7 @@ export function PendingTracker({ store }: { store: ReturnType<typeof usePendingT
   return (
     <>
       <div className="toolbar">
-        <nav className="tabs" role="tablist" aria-label="Pending view">
-          <button
-            type="button"
-            role="tab"
-            className="tab"
-            aria-selected={view === 'subjects'}
-            onClick={() => setView('subjects')}
-          >
-            Subjects
-          </button>
-          <button
-            type="button"
-            role="tab"
-            className="tab"
-            aria-selected={view === 'calendar'}
-            onClick={() => setView('calendar')}
-          >
-            Calendar
-          </button>
-        </nav>
+        {nav}
 
         <label className="sr-only" htmlFor="trimester-select">
           Trimester

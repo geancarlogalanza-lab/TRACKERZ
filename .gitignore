@@ -25,3 +25,7 @@ dist-ssr
 
 # local environment
 .env
+
+# Supabase CLI
+supabase/.temp
+supabase/functions/.env

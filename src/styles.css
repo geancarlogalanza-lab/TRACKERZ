@@ -394,7 +394,11 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .dpanel,
 .calendar,
 .spanel,
-.auth__card {
+.auth__card,
+.reading-form,
+.reading-queue,
+.review-card,
+.lesson-list {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -1529,6 +1533,187 @@ html:has(.app--streaks) { background: #0f1115; }
   color: var(--accent);
   font-size: var(--fs-sm);
 }
+
+/* ==========================================================================
+   Reading — Capture · Review · Library
+   The same tokens, cards and controls as College. No fire scene and no
+   stats: Reading follows the system theme, and a library stays quiet.
+   ========================================================================== */
+
+/* Things waiting in a section (e.g. Review), never a score. */
+.tab__count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Capture -------------------------------------------------------------- */
+
+.reading-capture { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; max-width: 760px; }
+.reading-form { padding: 20px; }
+.reading-form__title { font-size: var(--fs-lg); font-weight: 600; margin-bottom: 16px; }
+.reading-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.reading-form__notes { min-height: 160px; }
+.reading-form__location { max-width: 240px; }
+.reading-form__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.reading-form__hint { color: var(--text-faint); font-size: var(--fs-sm); }
+
+.reading-queue { padding: 2px 16px; }
+.queue-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; }
+.queue-row + .queue-row { border-top: 1px solid var(--border); }
+.queue-row__body { flex: 1; min-width: 0; }
+.queue-row__book { font-weight: 600; }
+.queue-row__author { font-weight: 400; color: var(--text-muted); }
+.queue-row__preview {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.queue-row__error { margin-top: 4px; color: var(--danger); font-size: var(--fs-sm); }
+.queue-row__side { display: flex; align-items: center; gap: 8px; flex: none; }
+.queue-row__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+.queue-row__pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: queue-pulse 1.2s ease-in-out infinite;
+}
+
+/* --- Review --------------------------------------------------------------- */
+
+.review-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; max-width: 760px; }
+.review-card { padding: 20px; }
+.review-card__head { margin-bottom: 8px; }
+.review-card__book { font-size: var(--fs-lg); font-weight: 600; }
+.review-card__meta { color: var(--text-muted); font-size: var(--fs-sm); }
+.review-card__notes { margin-bottom: 16px; font-size: var(--fs-sm); }
+.review-card__notes summary { width: fit-content; color: var(--accent); font-weight: 500; cursor: pointer; }
+.review-card__notes-text { margin-top: 8px; color: var(--text-muted); white-space: pre-wrap; overflow-wrap: anywhere; }
+.review-card__passage {
+  margin: 8px 0 0;
+  padding-left: 12px;
+  border-left: 2px solid var(--border-strong);
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.review-card__none { margin-bottom: 16px; color: var(--text-muted); }
+.review-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.review-card__foot .form-error { flex: 1 1 100%; margin-bottom: 0; }
+.review-card__progress { color: var(--text-muted); font-size: var(--fs-sm); }
+
+.proposals { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 12px; }
+.proposal {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-recessed);
+}
+.proposal--skipped { opacity: 0.6; }
+.proposal--skipped .proposal__lesson { text-decoration: line-through; }
+/* The lesson is the point of the card, so it is the largest text on it. */
+.proposal__lesson { font-size: var(--fs-lg); font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
+.proposal__origin { color: var(--text-faint); font-size: var(--fs-xs); font-weight: 500; }
+.proposal__detail { color: var(--text-muted); font-size: var(--fs-sm); overflow-wrap: anywhere; }
+.proposal__label,
+.lesson__label { margin-right: 4px; color: var(--text); font-weight: 600; }
+.proposal__flags { list-style: none; margin: 2px 0 0; padding: 0; display: grid; gap: 4px; }
+.proposal__flag {
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-size: var(--fs-sm);
+}
+.proposal__flag-type { font-weight: 600; }
+.proposal__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.proposal__edit { display: grid; gap: 8px; }
+.proposal__decided { display: flex; align-items: center; gap: 10px; margin-top: 4px; font-size: var(--fs-sm); }
+.proposal__choice { color: var(--ok); font-weight: 600; }
+.proposal--skipped .proposal__choice { color: var(--text-muted); }
+.proposal__change {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+/* --- Library -------------------------------------------------------------- */
+
+.library { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; max-width: 860px; }
+.library__filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.library__search { flex: 1 1 260px; width: auto; }
+.library__book { flex: 0 1 280px; min-width: 0; }
+.library__retired-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+.library__matches { color: var(--text-faint); font-size: var(--fs-sm); }
+.lesson-list { list-style: none; margin: 0; padding: 2px 16px; }
+.lesson { display: flex; align-items: flex-start; gap: 12px; padding: 14px 0; }
+.lesson + .lesson { border-top: 1px solid var(--border); }
+.lesson__body { flex: 1; min-width: 0; display: grid; gap: 4px; }
+.lesson__text { font-weight: 500; line-height: 1.45; overflow-wrap: anywhere; }
+.lesson__detail { color: var(--text-muted); font-size: var(--fs-sm); overflow-wrap: anywhere; }
+.lesson__detail--flag { color: var(--warn); }
+.lesson__meta { display: flex; flex-wrap: wrap; gap: 4px 12px; color: var(--text-faint); font-size: var(--fs-xs); }
+.lesson--retired .lesson__text { color: var(--text-muted); }
+.lesson__retired { font-weight: 600; }
+
+@media (max-width: 700px) {
+  .reading-pair { grid-template-columns: 1fr; gap: 0; }
+  .reading-form,
+  .review-card { padding: 16px; }
+  .reading-form__location { max-width: none; }
+  .reading-form__foot .btn,
+  .review-card__foot .btn { width: 100%; }
+  .queue-row { flex-wrap: wrap; }
+  .queue-row__side { width: 100%; justify-content: flex-end; }
+  .library__book { flex: 1 1 100%; }
+}
+
+@keyframes queue-pulse { 50% { opacity: 0.3; } }
 
 /* ==========================================================================
    Motion — short, purposeful, and switched off for reduced motion

@@ -8,6 +8,14 @@
  * left out; this app derives what it needs in `types.ts` instead.
  */
 
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
 export type Database = {
   // Lets createClient pick the right options without an explicit generic.
   __InternalSupabase: {
@@ -15,6 +23,116 @@ export type Database = {
   }
   public: {
     Tables: {
+      captures: {
+        Row: {
+          ai_model: string | null
+          ai_result: Json | null
+          book_author: string
+          book_title: string
+          created_at: string
+          error: string | null
+          id: string
+          location: string | null
+          prompt_version: string | null
+          raw_notes: string
+          source_passage: string | null
+          status: string
+          status_changed_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_model?: string | null
+          ai_result?: Json | null
+          book_author: string
+          book_title: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          location?: string | null
+          prompt_version?: string | null
+          raw_notes: string
+          source_passage?: string | null
+          status?: string
+          status_changed_at?: string
+          user_id?: string
+        }
+        Update: {
+          ai_model?: string | null
+          ai_result?: Json | null
+          book_author?: string
+          book_title?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          location?: string | null
+          prompt_version?: string | null
+          raw_notes?: string
+          source_passage?: string | null
+          status?: string
+          status_changed_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      lessons: {
+        Row: {
+          basis: string | null
+          capture_id: string
+          created_at: string
+          decision: string
+          flags: Json
+          id: string
+          interpretation: string | null
+          last_surfaced_at: string | null
+          origin: string
+          proposal_index: number | null
+          retired_at: string | null
+          surfaced_count: number
+          text: string
+          user_id: string
+        }
+        Insert: {
+          basis?: string | null
+          capture_id: string
+          created_at?: string
+          decision: string
+          flags?: Json
+          id?: string
+          interpretation?: string | null
+          last_surfaced_at?: string | null
+          origin: string
+          proposal_index?: number | null
+          retired_at?: string | null
+          surfaced_count?: number
+          text: string
+          user_id?: string
+        }
+        Update: {
+          basis?: string | null
+          capture_id?: string
+          created_at?: string
+          decision?: string
+          flags?: Json
+          id?: string
+          interpretation?: string | null
+          last_surfaced_at?: string | null
+          origin?: string
+          proposal_index?: number | null
+          retired_at?: string | null
+          surfaced_count?: number
+          text?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'lessons_capture_id_user_id_fkey'
+            columns: ['capture_id', 'user_id']
+            isOneToOne: false
+            referencedRelation: 'captures'
+            referencedColumns: ['id', 'user_id']
+          },
+        ]
+      }
       streak_records: {
         Row: {
           created_at: string

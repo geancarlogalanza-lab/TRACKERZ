@@ -13,13 +13,24 @@ const root = createRoot(document.getElementById('root')!)
 
 // Development only: ?gean=0.4 holds the loading screen at a fill level,
 // ?gean=error shows the error state, ?gean=demo plays a simulated start-up.
-const preview = import.meta.env.DEV ? new URLSearchParams(location.search).get('gean') : null
+// ?reading=preview shows the Reading screens with sample data.
+const params = import.meta.env.DEV ? new URLSearchParams(location.search) : null
+const preview = params?.get('gean')
 
 if (preview) {
   void import('./boot/GeanPreview').then(({ GeanPreview }) =>
     root.render(
       <StrictMode>
         <GeanPreview mode={preview} />
+      </StrictMode>,
+    ),
+  )
+} else if (params?.get('reading') === 'preview') {
+  document.getElementById('gean-shell')?.remove()
+  void import('./components/reading/ReadingPreview').then(({ ReadingPreview }) =>
+    root.render(
+      <StrictMode>
+        <ReadingPreview />
       </StrictMode>,
     ),
   )

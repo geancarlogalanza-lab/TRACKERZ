@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import type { BootReport } from './boot/bootReport'
 import { AuthScreen } from './components/AuthScreen'
 import { PendingTracker } from './components/pending/PendingTracker'
@@ -7,13 +7,22 @@ import { StreakTracker } from './components/streaks/StreakTracker'
 import { BrandMark } from './components/ui/BrandMark'
 import { Button } from './components/ui/Button'
 import { ErrorNotice, Loading, Toast } from './components/ui/Feedback'
+import { SectionNav } from './components/ui/SectionNav'
 import { useAuth } from './hooks/useAuth'
 import { usePendingTracker } from './hooks/usePendingTracker'
 import { useStreakTracker } from './hooks/useStreakTracker'
 import { useToast } from './hooks/useToast'
 import { isConfigured, supabase } from './lib/supabase'
 
-type Tab = 'pending' | 'streaks'
+/** The two areas of the app; each has its own sections. */
+type Area = 'college' | 'reading'
+type CollegeSection = 'tasks' | 'calendar' | 'streaks'
+
+/**
+ * Reading is its own chunk, fetched the first time Reading is opened, so
+ * College's start-up and the loading screen never wait on it.
+ */
+const ReadingArea = lazy(() => import('./components/reading/ReadingArea'))
 
 interface AppProps {
   /** Receives each start-up step, so the loading screen can show real progress. */
@@ -22,7 +31,11 @@ interface AppProps {
 
 export default function App({ onBoot }: AppProps = {}) {
   const { user, loading } = useAuth()
-  const [tab, setTab] = useState<Tab>('pending')
+  const [area, setArea] = useState<Area>('college')
+  const [college, setCollege] = useState<CollegeSection>('tasks')
+  // Once opened, Reading stays mounted (hidden) so its state and any
+  // in-flight processing carry on while you're in College.
+  const [readingOpened, setReadingOpened] = useState(false)
   const toast = useToast()
 
   // The fireplace belongs to the Streak tracker alone. The page only dresses
@@ -30,7 +43,12 @@ export default function App({ onBoot }: AppProps = {}) {
   // ordinary ground rather than a bare black one.
   const [hearth, setHearth] = useState(false)
   const onHearthReady = useCallback((ok: boolean) => setHearth(ok), [])
-  const showHearth = tab === 'streaks'
+  const showHearth = area === 'college' && college === 'streaks'
+
+  const openArea = (next: Area) => {
+    setArea(next)
+    if (next === 'reading') setReadingOpened(true)
+  }
 
   // Hooks run unconditionally; they stay idle until there is a signed-in user.
   const pending = usePendingTracker(user?.id ?? null, toast.show)
@@ -75,6 +93,19 @@ export default function App({ onBoot }: AppProps = {}) {
   if (loading) return <Loading label="Loading…" />
   if (!user) return <AuthScreen />
 
+  const collegeNav = (
+    <SectionNav
+      label="College"
+      value={college}
+      onChange={setCollege}
+      sections={[
+        { id: 'tasks', label: 'Tasks' },
+        { id: 'calendar', label: 'Calendar' },
+        { id: 'streaks', label: 'Streaks' },
+      ]}
+    />
+  )
+
   return (
     <div
       className={[
@@ -93,26 +124,15 @@ export default function App({ onBoot }: AppProps = {}) {
           <span>Tracker</span>
         </div>
 
-        <nav className="tabs" role="tablist" aria-label="Trackers">
-          <button
-            type="button"
-            role="tab"
-            className="tab"
-            aria-selected={tab === 'pending'}
-            onClick={() => setTab('pending')}
-          >
-            Pending
-          </button>
-          <button
-            type="button"
-            role="tab"
-            className="tab"
-            aria-selected={tab === 'streaks'}
-            onClick={() => setTab('streaks')}
-          >
-            Streaks
-          </button>
-        </nav>
+        <SectionNav
+          label="Areas"
+          value={area}
+          onChange={openArea}
+          sections={[
+            { id: 'college', label: 'College' },
+            { id: 'reading', label: 'Reading' },
+          ]}
+        />
 
         <span className="header__spacer" />
 
@@ -134,17 +154,36 @@ export default function App({ onBoot }: AppProps = {}) {
       </header>
 
       <main className="main">
-        {tab === 'pending' ? (
-          // The trimester list has to exist before subjects can be shown.
-          pending.trimesters.length === 0 && pending.loadError ? (
-            <ErrorNotice message={pending.loadError} onRetry={pending.retry} />
-          ) : pending.trimesters.length === 0 ? (
-            <Loading label="Setting things up…" />
+        {area === 'college' &&
+          (college === 'streaks' ? (
+            <>
+              <div className="toolbar">{collegeNav}</div>
+              <StreakTracker store={streaks} />
+            </>
+          ) : // The trimester list has to exist before subjects can be shown.
+          pending.trimesters.length === 0 ? (
+            <>
+              <div className="toolbar">{collegeNav}</div>
+              {pending.loadError ? (
+                <ErrorNotice message={pending.loadError} onRetry={pending.retry} />
+              ) : (
+                <Loading label="Setting things up…" />
+              )}
+            </>
           ) : (
-            <PendingTracker store={pending} />
-          )
-        ) : (
-          <StreakTracker store={streaks} />
+            <PendingTracker
+              store={pending}
+              view={college === 'calendar' ? 'calendar' : 'subjects'}
+              nav={collegeNav}
+            />
+          ))}
+
+        {readingOpened && (
+          <div hidden={area !== 'reading'}>
+            <Suspense fallback={<Loading label="Opening Reading…" />}>
+              <ReadingArea onError={toast.show} />
+            </Suspense>
+          </div>
         )}
       </main>
 

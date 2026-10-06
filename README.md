@@ -1,18 +1,21 @@
 # Tracker
 
-A personal college task tracker and daily streak tracker. Two modes, one tab
-switch apart, backed by a Supabase account so the same data is there on a
-laptop and a phone.
+A personal app with two areas, backed by one Supabase account so the same
+data is there on a laptop and a phone: **College** (tasks, a calendar of
+them, and daily streaks) and **Reading** (notes from books, turned into
+lessons you keep and see again).
 
-It is deliberately small. There is no archive of completed work, no points, no
-analytics, and no productivity score — completing a task deletes it, and a
-streak grows because you said it did.
+College is deliberately small. There is no archive of completed work, no
+points, no analytics, and no productivity score — completing a task deletes
+it, and a streak grows because you said it did. Reading is a library by
+nature, but it stays just as quiet: no stats, no streaks, no scores.
 
 ```
-[ Pending ]   [ Streaks ]
+[ College ]  Tasks · Calendar · Streaks
+[ Reading ]  Capture · Review · Library
 ```
 
-**Pending** — subjects you create, each with its own colour, holding the tasks
+**Tasks** — subjects you create, each with its own colour, holding the tasks
 still to do. Colours are picked from a full hue wheel rather than a fixed
 palette, and the picker refuses one that would look like a subject you
 already have. A task carries a title, an optional description, when you plan to
@@ -20,7 +23,7 @@ work on it, and when it is due. Anything overdue or landing today is pulled to
 a short list at the top. Completing a task removes it; the subject stays until
 you delete it yourself.
 
-A **Calendar** switch in the toolbar shows the same tasks as a month. Each day
+**Calendar** shows the same tasks as a month. Each day
 previews the first few items and hands the rest to a day panel, so a busy week
 still scans: a circle is work planned for that day, a triangle is a deadline,
 and subject colour rides along on top of the shape rather than carrying the
@@ -51,10 +54,29 @@ at 30 frames a second, stops when the tab is hidden, and shows a single
 still frame when the system prefers reduced motion. Panels over it are
 lightly frosted so the glow reads through while text stays legible.
 
+**Reading** — the loop is read, capture, review, keep, see again.
+**Capture** takes the book, its author, your raw notes, and optionally the
+passage that prompted them and a page or location. Claude reads them and
+proposes a few lessons: it keeps your thinking, says whether each idea is the
+author's, your own, or yours building on the author's, quotes the words each
+rests on, and flags unsupported leaps and contradictions rather than smoothing
+them over. It is told never to add ideas that aren't in your notes.
+**Review** is where nothing reaches the library without you: each proposal is
+kept, edited, left out, kept in your original words, or kept anyway despite a
+flag. **Library** holds what you kept — search it, filter it by book, edit a
+lesson, or retire it. Retired lessons stay but never come back. Every morning
+at 8:00 (Manila) one active lesson is posted to your Discord, the one shown
+longest ago first.
+
+Reading never sees College data. Streak notes in particular are never sent
+to Claude; only Reading captures are.
+
 ## Stack
 
 - **React + TypeScript + Vite** — static build, no server of its own
-- **Supabase** — Postgres, auth, and Row Level Security
+- **Supabase** — Postgres, auth, Row Level Security, one Edge Function
+  (`reading-process`), and a scheduled job (`pg_cron` + `pg_net`)
+- **Claude API** — called only from the Edge Function, never from the browser
 - **GitHub Pages** — hosting, deployed by GitHub Actions
 
 ## Architecture
@@ -70,12 +92,18 @@ src/
     types.ts             domain types derived from it
     pendingRepository.ts subjects, tasks, trimesters
     streakRepository.ts  streaks, daily records
+    readingRepository.ts captures, lessons, the processing call
   hooks/         state, optimistic updates, error recovery
   lib/           pure helpers: dates, streak counting, colour, error messages
   components/
-    ui/          Button, Modal, Menu, Field, Feedback — shared by both trackers
+    ui/          Button, Modal, Menu, Field, Feedback, SectionNav — shared by every area
     pending/     subject cards, task rows, forms, the strip, the month calendar
     streaks/     calendar, day panel, streak cards
+    reading/     capture, review, library (a separate chunk, loaded on first open)
+supabase/
+  migrations/    the schema, in the order it was applied
+  functions/
+    reading-process/   Claude call; lessons.ts holds the prompt and the answer's schema
 ```
 
 Two decisions worth knowing:
@@ -109,10 +137,29 @@ npm run dev
 ## Setting up your own Supabase project
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. Run `supabase/migrations/20260906065838_init_tracker_schema.sql` in the SQL
-   editor. It creates the five tables and enables RLS on all of them.
+2. Run the files in `supabase/migrations/` in the SQL editor, in name order.
+   They create the College tables, the Reading tables, RLS on every table,
+   and the daily resurfacing job.
 3. Copy the project URL and publishable key from **Project Settings → API**
    into `.env`.
+
+Reading needs three more things, all set by hand so no secret ever sits in
+this repository:
+
+1. Deploy `supabase/functions/reading-process`, then add its secrets under
+   **Edge Functions → Secrets**: `ANTHROPIC_API_KEY`, and `OWNER_EMAIL` (the
+   email you sign in with — only that account may run Claude). Optional:
+   `ANTHROPIC_MODEL` (default `claude-opus-5-5`) and `ANTHROPIC_EFFORT`
+   (default `medium`).
+2. Create a Discord webhook for the channel lessons should arrive in.
+3. Store it, and your email, in Vault from the SQL editor:
+
+   ```sql
+   select vault.create_secret('https://discord.com/api/webhooks/…', 'reading_discord_webhook');
+   select vault.create_secret('you@example.com', 'reading_owner_email');
+   ```
+
+   Until both exist, the morning job does nothing.
 
 New accounts need to confirm their email by default. For a personal instance
 you can turn that off under **Authentication → Sign In / Providers → Email**.
@@ -130,14 +177,23 @@ User
  ├── Trimester
  │     └── Subject  (name, colour)
  │           └── Task  (title, description, planned date/time, deadline date/time)
- └── Streak
-       └── Streak record  (one per day, free-text note)
+ ├── Streak
+ │     └── Streak record  (one per day, free-text note)
+ └── Capture  (book, author, raw notes, passage, location, status, Claude's proposals)
+       └── Lesson  (text, whose idea, basis, your take, flags, retired, last resurfaced)
 ```
 
 Every table has a `user_id` and RLS policies of the form
 `auth.uid() = user_id`, so one account can only ever reach its own rows.
 Deletes cascade: removing a subject removes its tasks, removing a streak
-removes its records.
+removes its records, removing a capture removes its lessons. A lesson's
+foreign key covers its capture *and* its owner, so it can never point at
+someone else's capture. College and Reading share no tables and no keys —
+only the signed-in user.
+
+A capture keeps only Claude's validated, structured proposal, not the raw
+request or response. Text is small: a thousand captures with their lessons
+come to roughly 10 MB.
 
 Streak records carry one more rule: a continuation can only be inserted or
 deleted for the current day (with a one-day tolerance for timezones), and a
