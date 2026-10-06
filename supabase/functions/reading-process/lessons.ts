@@ -101,6 +101,40 @@ export function buildUserMessage(capture: CaptureInput): string {
   ].join('\n')
 }
 
+/**
+ * Everything Claude needs in one paste, for processing by hand in a claude.ai
+ * chat: the same rules and the same capture text the Edge Function sends,
+ * plus the answer's shape spelled out, since a chat has no schema to
+ * enforce it.
+ */
+export function buildManualPrompt(capture: CaptureInput): string {
+  return [
+    SYSTEM_PROMPT,
+    '',
+    'Answer with only a JSON object and no other text, in exactly this shape:',
+    '{"lessons": [{"lesson": "...", "origin": "author" | "mine" | "mixed", "basis": "...", ' +
+      '"interpretation": "..." or null, "flags": [{"type": "unsupported_leap" | "contradiction", "note": "..."}]}]}',
+    '',
+    buildUserMessage(capture),
+  ].join('\n')
+}
+
+/**
+ * Reads a pasted claude.ai reply: tolerates a code fence or a sentence
+ * around the JSON, then holds it to the same checks as an API answer.
+ * Returns null when no usable answer is in it.
+ */
+export function parseReply(reply: string): ProcessingResult | null {
+  const start = reply.indexOf('{')
+  const end = reply.lastIndexOf('}')
+  if (start === -1 || end <= start) return null
+  try {
+    return validateResult(JSON.parse(reply.slice(start, end + 1)))
+  } catch {
+    return null
+  }
+}
+
 const MAX_LESSONS = 12
 
 const text = (value: unknown): string | null =>

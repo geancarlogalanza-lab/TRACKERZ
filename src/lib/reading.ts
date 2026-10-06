@@ -6,6 +6,22 @@ import type { Capture, Lesson, LessonOrigin, ProposedLesson } from '../data/type
  * this side only reads what was stored.
  */
 
+/**
+ * Whether captures go to Claude automatically, through the reading-process
+ * Edge Function. That needs an ANTHROPIC_API_KEY on the function, which is
+ * paid API usage. While this is off, you copy the notes into a claude.ai
+ * chat yourself and paste the reply back, which Claude Pro covers.
+ */
+export const AUTO_PROCESS = false
+
+// The prompt and the answer checks are shared with the Edge Function, so
+// both paths ask Claude the same thing and accept the same answers.
+export {
+  PROMPT_VERSION,
+  buildManualPrompt,
+  parseReply,
+} from '../../supabase/functions/reading-process/lessons.ts'
+
 /** A run still "processing" after this long has died; it can be retried. */
 export const STALE_PROCESSING_MS = 3 * 60 * 1000
 

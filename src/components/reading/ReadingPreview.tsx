@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { BrandMark } from '../ui/BrandMark'
 import { SectionNav } from '../ui/SectionNav'
 import { ReadingScreens } from './ReadingArea'
+import { parseReply } from '../../lib/reading'
 import type { Capture, Lesson } from '../../data/types'
 import type { ReadingStore } from '../../hooks/useReading'
 
@@ -63,15 +64,7 @@ const SAMPLE_CAPTURES: Capture[] = [
     book_author: 'Morgan Housel',
     location: 'ch. 5',
     raw_notes: 'Getting wealthy and staying wealthy are different skills.',
-    status: 'processing',
-  }),
-  capture({
-    book_title: 'Atomic Habits',
-    book_author: 'James Clear',
-    location: null,
-    raw_notes: 'Habits are the compound interest of self-improvement.',
-    status: 'failed',
-    error: 'Claude is busy right now. Try again in a minute.',
+    status: 'queued',
   }),
 ]
 
@@ -129,7 +122,19 @@ export function ReadingPreview() {
     retry: () => {},
     addCapture: async (input) => {
       await pause()
-      setCaptures((current) => [capture({ ...input, status: 'processing', ai_result: null }), ...current])
+      const created = capture({ ...input, status: 'queued', ai_result: null })
+      setCaptures((current) => [created, ...current])
+      return created
+    },
+    applyReply: async (target, reply) => {
+      const result = parseReply(reply)
+      if (!result) throw new Error("That doesn't look like Claude's full reply.")
+      await pause()
+      setCaptures((current) =>
+        current.map((item) =>
+          item.id === target.id ? { ...item, status: 'needs_review', ai_result: result as never } : item,
+        ),
+      )
     },
     process: async () => pause(),
     discardCapture: async (id) => {

@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
 import { Button } from '../ui/Button'
 import { ConfirmDialog } from '../ui/Feedback'
+import { ClaudeHandoff } from './ClaudeHandoff'
 import { Field, FormError } from '../ui/Field'
 import { Menu } from '../ui/Menu'
-import { booksOf, isStale } from '../../lib/reading'
+import { AUTO_PROCESS, booksOf, isStale } from '../../lib/reading'
 import { toMessage } from '../../lib/errors'
 import type { Capture } from '../../data/types'
 import type { ReadingStore } from '../../hooks/useReading'
@@ -30,6 +31,8 @@ export function CaptureView({ store, onOpenReview, onError }: CaptureViewProps) 
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [discarding, setDiscarding] = useState<Capture | null>(null)
+  // The capture being taken through a claude.ai chat by hand.
+  const [handoff, setHandoff] = useState<Capture | null>(null)
 
   // Books you've already used, so the same book is spelled the same way.
   const books = useMemo(
@@ -58,7 +61,7 @@ export function CaptureView({ store, onOpenReview, onError }: CaptureViewProps) 
 
     setBusy(true)
     try {
-      await store.addCapture({
+      const created = await store.addCapture({
         book_title: title,
         book_author: author,
         raw_notes: notes,
@@ -68,6 +71,7 @@ export function CaptureView({ store, onOpenReview, onError }: CaptureViewProps) 
       setNotes('')
       setPassage('')
       setLocation('')
+      if (!AUTO_PROCESS) setHandoff(created)
     } catch (caught) {
       setError(toMessage(caught, 'Could not save those notes.'))
     } finally {
@@ -159,9 +163,13 @@ export function CaptureView({ store, onOpenReview, onError }: CaptureViewProps) 
         </Field>
 
         <div className="reading-form__foot">
-          <p className="reading-form__hint">Claude proposes lessons from your notes. You decide what to keep.</p>
+          <p className="reading-form__hint">
+            {AUTO_PROCESS
+              ? 'Claude proposes lessons from your notes. You decide what to keep.'
+              : "Next, you'll take your notes to Claude and bring its lessons back to review."}
+          </p>
           <Button type="submit" variant="primary" disabled={busy}>
-            {busy ? 'Saving…' : 'Process notes'}
+            {busy ? 'Saving…' : AUTO_PROCESS ? 'Process notes' : 'Save notes'}
           </Button>
         </div>
       </form>
@@ -177,12 +185,29 @@ export function CaptureView({ store, onOpenReview, onError }: CaptureViewProps) 
                 key={capture.id}
                 capture={capture}
                 onOpenReview={onOpenReview}
-                onRetry={() => store.process(capture).catch((caught) => onError(caught.message))}
+                onContinue={() => setHandoff(capture)}
+                onRetry={() =>
+                  AUTO_PROCESS
+                    ? store.process(capture).catch((caught) => onError(caught.message))
+                    : setHandoff(capture)
+                }
                 onDiscard={() => setDiscarding(capture)}
               />
             ))}
           </div>
         </section>
+      )}
+
+      {handoff && (
+        <ClaudeHandoff
+          capture={handoff}
+          onApply={(reply) => store.applyReply(handoff, reply)}
+          onDone={() => {
+            setHandoff(null)
+            onOpenReview()
+          }}
+          onClose={() => setHandoff(null)}
+        />
       )}
 
       {discarding && (
@@ -201,11 +226,13 @@ export function CaptureView({ store, onOpenReview, onError }: CaptureViewProps) 
 function QueueRow({
   capture,
   onOpenReview,
+  onContinue,
   onRetry,
   onDiscard,
 }: {
   capture: Capture
   onOpenReview: () => void
+  onContinue: () => void
   onRetry: () => void
   onDiscard: () => void
 }) {
@@ -234,7 +261,15 @@ function QueueRow({
             Review
           </Button>
         )}
-        {(capture.status === 'queued' || capture.status === 'processing') && !stale && (
+        {capture.status === 'queued' && !AUTO_PROCESS && (
+          <>
+            <span className="queue-row__status">Waiting for Claude</span>
+            <Button size="sm" variant="primary" onClick={onContinue}>
+              Continue
+            </Button>
+          </>
+        )}
+        {(capture.status === 'processing' || (capture.status === 'queued' && AUTO_PROCESS)) && !stale && (
           <span className="queue-row__status" role="status">
             <span className="queue-row__pulse" aria-hidden="true" />
             Processing…

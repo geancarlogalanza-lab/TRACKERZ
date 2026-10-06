@@ -56,7 +56,10 @@ lightly frosted so the glow reads through while text stays legible.
 
 **Reading** — the loop is read, capture, review, keep, see again.
 **Capture** takes the book, its author, your raw notes, and optionally the
-passage that prompted them and a page or location. Claude reads them and
+passage that prompted them and a page or location. You take them to Claude
+in a claude.ai chat — **Copy for Claude** copies your notes together with the
+instructions, and you paste Claude's reply back — so a Claude Pro
+subscription is all it needs, with no paid API. Claude
 proposes a few lessons: it keeps your thinking, says whether each idea is the
 author's, your own, or yours building on the author's, quotes the words each
 rests on, and flags unsupported leaps and contradictions rather than smoothing
@@ -76,7 +79,8 @@ to Claude; only Reading captures are.
 - **React + TypeScript + Vite** — static build, no server of its own
 - **Supabase** — Postgres, auth, Row Level Security, one Edge Function
   (`reading-process`), and a scheduled job (`pg_cron` + `pg_net`)
-- **Claude API** — called only from the Edge Function, never from the browser
+- **Claude** — by hand through a claude.ai chat (the default), or through the
+  Claude API from the Edge Function when automatic processing is switched on
 - **GitHub Pages** — hosting, deployed by GitHub Actions
 
 ## Architecture
@@ -143,16 +147,11 @@ npm run dev
 3. Copy the project URL and publishable key from **Project Settings → API**
    into `.env`.
 
-Reading needs three more things, all set by hand so no secret ever sits in
-this repository:
+For the daily lesson in Discord, two things are set by hand so no secret
+ever sits in this repository:
 
-1. Deploy `supabase/functions/reading-process`, then add its secrets under
-   **Edge Functions → Secrets**: `ANTHROPIC_API_KEY`, and `OWNER_EMAIL` (the
-   email you sign in with — only that account may run Claude). Optional:
-   `ANTHROPIC_MODEL` (default `claude-opus-5-5`) and `ANTHROPIC_EFFORT`
-   (default `medium`).
-2. Create a Discord webhook for the channel lessons should arrive in.
-3. Store it, and your email, in Vault from the SQL editor:
+1. Create a Discord webhook for the channel lessons should arrive in.
+2. Store it, and the email you sign in with, in Vault from the SQL editor:
 
    ```sql
    select vault.create_secret('https://discord.com/api/webhooks/…', 'reading_discord_webhook');
@@ -160,6 +159,15 @@ this repository:
    ```
 
    Until both exist, the morning job does nothing.
+
+**Automatic processing (optional, paid).** Captures can instead go to Claude
+on their own through the `reading-process` Edge Function, which uses the
+same instructions and checks. It needs Anthropic API credit, which a Claude
+Pro subscription doesn't include. To switch it on: deploy the function, add
+`ANTHROPIC_API_KEY` and `OWNER_EMAIL` (only that account may run it) under
+**Edge Functions → Secrets** — optionally `ANTHROPIC_MODEL` (default
+`claude-opus-5-5`) and `ANTHROPIC_EFFORT` (default `medium`) — and set
+`AUTO_PROCESS` to `true` in `src/lib/reading.ts`.
 
 New accounts need to confirm their email by default. For a personal instance
 you can turn that off under **Authentication → Sign In / Providers → Email**.

@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import type { Json } from './database.types'
 import type { Capture, CaptureInput, Lesson, LessonDecision, ProposedLesson } from './types'
 
 /**
@@ -60,6 +61,32 @@ export async function processCapture(id: string): Promise<void> {
     if (body?.error) throw new Error(body.error)
   }
   throw error
+}
+
+/**
+ * Stores proposals Claude gave in a claude.ai chat, already checked by the
+ * caller, and sends the capture to Review — the same end state the Edge
+ * Function reaches.
+ */
+export async function saveManualResult(
+  id: string,
+  result: { lessons: ProposedLesson[] },
+  promptVersion: string,
+): Promise<Capture> {
+  return unwrap(
+    await supabase
+      .from('captures')
+      .update({
+        status: 'needs_review',
+        ai_result: result as unknown as Json,
+        ai_model: 'claude.ai (pasted)',
+        prompt_version: promptVersion,
+        error: null,
+      })
+      .eq('id', id)
+      .select()
+      .single(),
+  )
 }
 
 export async function deleteCapture(id: string): Promise<void> {

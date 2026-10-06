@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import * as repo from '../data/readingRepository'
 import type { Capture, CaptureInput, Lesson } from '../data/types'
 import { toMessage } from '../lib/errors'
+import { AUTO_PROCESS, PROMPT_VERSION, parseReply } from '../lib/reading'
 
 /** How often to look for finished processing while something is in flight. */
 const POLL_MS = 4000
@@ -76,17 +77,35 @@ export function useReading() {
     }
   }, [])
 
-  /** Saves a capture, then hands it to Claude. The capture is kept even if processing can't start. */
+  /**
+   * Saves a capture. With automatic processing on it goes straight to
+   * Claude; otherwise it waits for a reply pasted from claude.ai. The
+   * capture is kept either way, even if processing can't start.
+   */
   const addCapture = useCallback(
-    async (input: CaptureInput) => {
+    async (input: CaptureInput): Promise<Capture> => {
       const created = await repo.createCapture(input)
       setCaptures((current) => [created, ...current])
-      await process(created).catch(() => {
-        // The capture is saved and shows the failure with a retry.
-      })
+      if (AUTO_PROCESS) {
+        await process(created).catch(() => {
+          // The capture is saved and shows the failure with a retry.
+        })
+      }
+      return created
     },
     [process],
   )
+
+  /** Takes Claude's reply from a claude.ai chat and sends the capture to Review. */
+  const applyReply = useCallback(async (capture: Capture, reply: string) => {
+    const result = parseReply(reply)
+    if (!result) {
+      throw new Error(
+        "That doesn't look like Claude's full reply. Copy all of it, from the first { to the last }.",
+      )
+    }
+    replace(await repo.saveManualResult(capture.id, result, PROMPT_VERSION))
+  }, [])
 
   const discardCapture = useCallback(async (id: string) => {
     await repo.deleteCapture(id)
@@ -117,6 +136,7 @@ export function useReading() {
     loadError,
     retry,
     addCapture,
+    applyReply,
     process,
     discardCapture,
     saveReview,
