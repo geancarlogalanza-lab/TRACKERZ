@@ -60,7 +60,8 @@ passage that prompted them and a page or location. You take them to Claude
 in a claude.ai chat — **Copy for Claude** copies your notes together with the
 instructions, and you paste Claude's reply back — so a Claude Pro
 subscription is all it needs, with no paid API. Claude
-proposes a few lessons: it keeps your thinking, says whether each idea is the
+proposes a lesson for each idea in your notes, in order — a whole book's
+notes can give dozens: it keeps your thinking, says whether each idea is the
 author's, your own, or yours building on the author's, quotes the words each
 rests on, and flags unsupported leaps and contradictions rather than smoothing
 them over. It is told never to add ideas that aren't in your notes.
