@@ -13,7 +13,9 @@ export function toMessage(error: unknown, fallback = 'Something went wrong.'): s
       case '23505':
         return 'That already exists.'
       case '23514':
-        return 'That value is not allowed.'
+        return ruleBroken(err.message ?? '') ?? 'That value is not allowed.'
+      case '23503':
+        return 'That refers to something that no longer exists. Refresh and try again.'
       case '42501':
         return 'You do not have permission to do that.'
       case 'PGRST301':
@@ -29,4 +31,27 @@ export function toMessage(error: unknown, fallback = 'Something went wrong.'): s
 
   if (typeof error === 'string' && error) return error
   return fallback
+}
+
+/**
+ * The database's own checks, by constraint name, in words. The forms catch
+ * all of these first; this is for when something reaches the database
+ * anyway — another device on an old version, say.
+ */
+const RULES: [string, string][] = [
+  ['tasks_planned_time_needs_date', 'A planned time needs a planned date.'],
+  ['tasks_deadline_time_needs_date', 'A deadline time needs a deadline date.'],
+  ['tasks_description_length', 'Descriptions can be up to 5,000 characters.'],
+  ['tasks_title_check', 'A task needs a title of up to 200 characters.'],
+  ['subjects_name_check', 'A subject needs a name of up to 80 characters.'],
+  ['trimesters_label_check', 'A trimester needs a name of up to 80 characters.'],
+  ['streaks_name_check', 'A streak needs a name of up to 80 characters.'],
+  ['streak_records_note_length', 'Notes can be up to 500 characters.'],
+  ['captures_raw_notes_check', 'Notes can be up to 20,000 characters. Split them into two captures.'],
+  ['captures_source_passage_check', 'A passage can be up to 20,000 characters.'],
+  ['lessons_text_check', 'A lesson can be up to 2,000 characters.'],
+]
+
+function ruleBroken(message: string): string | null {
+  return RULES.find(([name]) => message.includes(name))?.[1] ?? null
 }

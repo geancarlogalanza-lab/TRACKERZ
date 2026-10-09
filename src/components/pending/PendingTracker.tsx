@@ -15,6 +15,7 @@ import { burst, ember } from '../../lib/ember'
 import { needsAttention } from '../../lib/focus'
 import { indexTasksByDay } from '../../lib/taskCalendar'
 import { plural } from '../../lib/plural'
+import { duplicateName } from '../../lib/validation'
 import type { usePendingTracker } from '../../hooks/usePendingTracker'
 import type { ISODate, Subject, Task } from '../../data/types'
 
@@ -272,6 +273,7 @@ export function PendingTracker({ store, view, nav }: PendingTrackerProps) {
         <TaskForm
           subjects={subjects}
           subjectId={dialog.subjectId}
+          tasks={tasks}
           initialPlannedDate={dialog.plannedDate}
           onSave={store.addTask}
           onClose={close}
@@ -283,6 +285,7 @@ export function PendingTracker({ store, view, nav }: PendingTrackerProps) {
           subjects={subjects}
           subjectId={dialog.task.subject_id}
           task={dialog.task}
+          tasks={tasks}
           onSave={(subjectId, input) => store.editTask(dialog.task.id, subjectId, input)}
           onClose={close}
         />
@@ -294,6 +297,13 @@ export function PendingTracker({ store, view, nav }: PendingTrackerProps) {
           label="Name"
           placeholder="Trimester 2"
           submitLabel="Create"
+          check={(label) =>
+            duplicateName(
+              label,
+              trimesters.map((item) => item.label),
+              'trimester',
+            )
+          }
           onSubmit={store.addTrimester}
           onClose={close}
         />
@@ -305,6 +315,13 @@ export function PendingTracker({ store, view, nav }: PendingTrackerProps) {
           label="Name"
           initialValue={activeTrimester.label}
           submitLabel="Save"
+          check={(label) =>
+            duplicateName(
+              label,
+              trimesters.filter((item) => item.id !== activeTrimester.id).map((item) => item.label),
+              'trimester',
+            )
+          }
           onSubmit={(label) => store.editTrimester(activeTrimester.id, label)}
           onClose={close}
         />

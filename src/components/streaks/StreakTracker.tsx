@@ -8,6 +8,7 @@ import { DayDetails } from './DayDetails'
 import { TodayPanel } from './TodayPanel'
 import { today as todayISO } from '../../lib/dates'
 import { aim, burst, ember } from '../../lib/ember'
+import { duplicateName } from '../../lib/validation'
 import {
   activeRunOn,
   datesForStreak,
@@ -149,10 +150,16 @@ export function StreakTracker({ store }: { store: ReturnType<typeof useStreakTra
     }
   }
 
-  const selectDay = (day: ISODate) => {
-    if (day > today) return
-    setSelected(day)
-  }
+  // Stable, so the calendar only redraws when something it shows changes —
+  // not on every tick of the Today panel's own animations.
+  const selectDay = useCallback(
+    (day: ISODate) => {
+      if (day > today) return
+      setSelected(day)
+    },
+    [today],
+  )
+  const changeMonth = useCallback((year: number, month: number) => setView({ year, month }), [])
 
   if (loading) return <Loading label="Loading your streaks…" />
   if (loadError) return <ErrorNotice message={loadError} onRetry={retry} />
@@ -190,7 +197,7 @@ export function StreakTracker({ store }: { store: ReturnType<typeof useStreakTra
             focusStreakId={focusStreakId}
             pulseToday={pulse}
             onSelect={selectDay}
-            onMonthChange={(year, month) => setView({ year, month })}
+            onMonthChange={changeMonth}
           />
         </div>
 
@@ -225,6 +232,13 @@ export function StreakTracker({ store }: { store: ReturnType<typeof useStreakTra
           placeholder="Pushups"
           submitLabel="Start today"
           sparks="kindle"
+          check={(name) =>
+            duplicateName(
+              name,
+              streaks.map((item) => item.name),
+              'streak',
+            )
+          }
           onSubmit={async (name) => {
             // A new streak begins today. If it's the only one, today is secured.
             const stillOwed = streaks.filter((item) => standings.get(item.id)?.state !== 'done').length
@@ -244,6 +258,13 @@ export function StreakTracker({ store }: { store: ReturnType<typeof useStreakTra
           label="Streak name"
           initialValue={dialog.streak.name}
           submitLabel="Save"
+          check={(name) =>
+            duplicateName(
+              name,
+              streaks.filter((item) => item.id !== dialog.streak.id).map((item) => item.name),
+              'streak',
+            )
+          }
           onSubmit={(name) => store.editStreak(dialog.streak.id, name)}
           onClose={close}
         />

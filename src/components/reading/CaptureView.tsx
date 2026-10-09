@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Button } from '../ui/Button'
 import { ConfirmDialog } from '../ui/Feedback'
 import { ClaudeHandoff } from './ClaudeHandoff'
 import { Field, FormError } from '../ui/Field'
 import { Menu } from '../ui/Menu'
 import { aimBurst } from '../../lib/ember'
+import { LIMITS, lengthNotice, requiredText, sameText, worst } from '../../lib/validation'
 import { AUTO_PROCESS, booksOf, isStale } from '../../lib/reading'
 import { toMessage } from '../../lib/errors'
 import type { Capture } from '../../data/types'
@@ -16,7 +17,8 @@ interface CaptureViewProps {
   onError: (message: string) => void
 }
 
-const NOTES_LIMIT = 20000
+/** Notes past the limit are refused with a way out, never cut short as they're pasted. */
+const SPLIT = 'Split them into two captures.'
 
 /**
  * Write down what you read and what you made of it; Claude proposes the
@@ -29,6 +31,7 @@ export function CaptureView({ store, onOpenReview, onError }: CaptureViewProps) 
   const [notes, setNotes] = useState('')
   const [passage, setPassage] = useState('')
   const [location, setLocation] = useState('')
+  const [attempted, setAttempted] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [discarding, setDiscarding] = useState<Capture | null>(null)
@@ -54,11 +57,43 @@ export function CaptureView({ store, onOpenReview, onError }: CaptureViewProps) 
     if (known && !author.trim()) setAuthor(known.author)
   }
 
+  // What's missing is said once a save has been tried; length and a likely
+  // double save are said as you type.
+  const missing = {
+    title: requiredText(title, 'Add the book.'),
+    author: requiredText(author, 'Add its author.'),
+    notes: requiredText(notes, 'Write your notes first.'),
+  }
+  const waiting = store.captures.filter((item) => item.status !== 'reviewed').map((item) => item.raw_notes)
+  const notices = {
+    title: attempted ? missing.title : null,
+    author: attempted ? missing.author : null,
+    notes: worst(
+      attempted ? missing.notes : null,
+      lengthNotice(notes, LIMITS.notes, SPLIT),
+      sameText(notes, waiting, 'These exact notes are already waiting in Capture.'),
+    ),
+    passage: lengthNotice(passage, LIMITS.notes, 'Keep just the passage that prompted these notes.'),
+  }
+  const refs = {
+    title: useRef<HTMLInputElement>(null),
+    author: useRef<HTMLInputElement>(null),
+    notes: useRef<HTMLTextAreaElement>(null),
+    passage: useRef<HTMLTextAreaElement>(null),
+  }
+
   const submit = async (event: React.FormEvent) => {
     event.preventDefault()
+    if (busy) return
     setError(null)
-    if (!title.trim() || !author.trim()) return setError('Add the book and its author.')
-    if (!notes.trim()) return setError('Write your notes first.')
+    setAttempted(true)
+    const blocking = (['title', 'author', 'notes', 'passage'] as const).find(
+      (field) => (field !== 'passage' && missing[field]) || notices[field]?.level === 'error',
+    )
+    if (blocking) {
+      refs[blocking].current?.focus()
+      return
+    }
 
     const submitter = (event.nativeEvent as SubmitEvent).submitter
     const pop = submitter ? aimBurst(submitter) : null
@@ -72,6 +107,7 @@ export function CaptureView({ store, onOpenReview, onError }: CaptureViewProps) 
         location,
       })
       pop?.('kindle')
+      setAttempted(false)
       setNotes('')
       setPassage('')
       setLocation('')
@@ -92,30 +128,32 @@ export function CaptureView({ store, onOpenReview, onError }: CaptureViewProps) 
         <FormError message={error} />
 
         <div className="reading-pair">
-          <Field label="Book">
-            {(id) => (
+          <Field label="Book" notice={notices.title}>
+            {(id, a11y) => (
               <input
                 id={id}
+                ref={refs.title}
                 className="input"
                 value={title}
                 onChange={(event) => pickTitle(event.target.value)}
                 list="reading-books"
-                maxLength={200}
+                maxLength={LIMITS.bookField}
                 autoComplete="off"
-                required
+                {...a11y}
               />
             )}
           </Field>
-          <Field label="Author">
-            {(id) => (
+          <Field label="Author" notice={notices.author}>
+            {(id, a11y) => (
               <input
                 id={id}
+                ref={refs.author}
                 className="input"
                 value={author}
                 onChange={(event) => setAuthor(event.target.value)}
-                maxLength={200}
+                maxLength={LIMITS.bookField}
                 autoComplete="off"
-                required
+                {...a11y}
               />
             )}
           </Field>
@@ -126,29 +164,30 @@ export function CaptureView({ store, onOpenReview, onError }: CaptureViewProps) 
           ))}
         </datalist>
 
-        <Field label="Your notes">
-          {(id) => (
+        <Field label="Your notes" notice={notices.notes}>
+          {(id, a11y) => (
             <textarea
               id={id}
+              ref={refs.notes}
               className="textarea reading-form__notes"
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
-              maxLength={NOTES_LIMIT}
               placeholder="What stood out, what you think about it, where you disagree, how it applies to you."
-              required
+              {...a11y}
             />
           )}
         </Field>
 
-        <Field label="Passage from the book" hint="optional">
-          {(id) => (
+        <Field label="Passage from the book" hint="optional" notice={notices.passage}>
+          {(id, a11y) => (
             <textarea
               id={id}
+              ref={refs.passage}
               className="textarea"
               value={passage}
               onChange={(event) => setPassage(event.target.value)}
-              maxLength={NOTES_LIMIT}
               placeholder="The author's exact words, if a passage prompted these notes."
+              {...a11y}
             />
           )}
         </Field>
@@ -160,7 +199,7 @@ export function CaptureView({ store, onOpenReview, onError }: CaptureViewProps) 
               className="input reading-form__location"
               value={location}
               onChange={(event) => setLocation(event.target.value)}
-              maxLength={80}
+              maxLength={LIMITS.location}
               placeholder="p. 42, Loc 1234, ch. 3"
             />
           )}

@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Button } from '../ui/Button'
 import { ColorPicker } from '../ui/ColorPicker'
 import { Field, FormError } from '../ui/Field'
 import { Modal } from '../ui/Modal'
 import { isFaintOnSurfaces, nearestConflict, suggestColor } from '../../lib/color'
 import { toMessage } from '../../lib/errors'
+import { LIMITS, duplicateName, requiredText } from '../../lib/validation'
 import type { Subject, SubjectInput } from '../../data/types'
 
 interface SubjectFormProps {
@@ -36,6 +37,7 @@ export function SubjectForm({ subject, subjects, onSave, onClose }: SubjectFormP
 
   const [name, setName] = useState(subject?.name ?? '')
   const [color, setColor] = useState(() => subject?.color ?? suggestColor(others))
+  const [visited, setVisited] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -44,9 +46,24 @@ export function SubjectForm({ subject, subjects, onSave, onClose }: SubjectFormP
   const blocked = conflict !== null && !keptOwnColor
   const faint = isFaintOnSurfaces(color)
 
+  const missing = requiredText(name, 'Give the subject a name.')
+  const nameNotice =
+    (visited ? missing : null) ??
+    duplicateName(
+      name,
+      others.map((item) => item.name),
+      'subject this term',
+    )
+  const nameRef = useRef<HTMLInputElement>(null)
+
   const submit = async () => {
+    if (busy) return
     setError(null)
-    if (!name.trim()) return setError('Give the subject a name.')
+    if (missing) {
+      setVisited(true)
+      nameRef.current?.focus()
+      return
+    }
     if (blocked && conflict) {
       return setError(`That colour is too close to ${conflict.name}. Pick one further away.`)
     }
@@ -79,16 +96,18 @@ export function SubjectForm({ subject, subjects, onSave, onClose }: SubjectFormP
     >
       <FormError message={error} />
 
-      <Field label="Subject name">
-        {(id) => (
+      <Field label="Subject name" notice={nameNotice}>
+        {(id, a11y) => (
           <input
             id={id}
+            ref={nameRef}
             className="input"
             value={name}
             onChange={(event) => setName(event.target.value)}
+            onBlur={() => setVisited(true)}
             placeholder="Database Systems"
-            maxLength={80}
-            required
+            maxLength={LIMITS.name}
+            {...a11y}
           />
         )}
       </Field>

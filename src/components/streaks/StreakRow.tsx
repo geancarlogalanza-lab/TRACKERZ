@@ -4,6 +4,7 @@ import { CheckIcon } from '../ui/Icons'
 import { Menu } from '../ui/Menu'
 import { RollingNumber } from './RollingNumber'
 import { toMessage } from '../../lib/errors'
+import { LIMITS } from '../../lib/validation'
 import type { Streak, StreakRecord } from '../../data/types'
 
 export type RowState =
@@ -209,6 +210,7 @@ export function StreakRow({
                 onChange={(event) => setDraft(event.target.value)}
                 placeholder={hasNote ? '' : 'Add a note'}
                 aria-label={`Note for ${streak.name}`}
+                maxLength={LIMITS.streakNote}
                 disabled={busy}
               />
               <Button type="submit" size="sm" disabled={busy || (!draft.trim() && !hasNote)}>

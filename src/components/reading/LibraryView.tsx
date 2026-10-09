@@ -6,6 +6,7 @@ import { Menu } from '../ui/Menu'
 import { Modal } from '../ui/Modal'
 import { FLAG_LABEL, ORIGIN_LABEL, bookKey, booksOf, lessonMatches } from '../../lib/reading'
 import { toMessage } from '../../lib/errors'
+import { LIMITS, lengthNotice, requiredText, worst } from '../../lib/validation'
 import { plural } from '../../lib/plural'
 import type { Lesson, LessonFlag } from '../../data/types'
 import type { ReadingStore } from '../../hooks/useReading'
@@ -197,9 +198,10 @@ function EditLesson({
   const [text, setText] = useState(lesson.text)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const notice = worst(requiredText(text, 'A lesson needs some words.'), lengthNotice(text, LIMITS.lessonText))
 
   const submit = async () => {
-    if (!text.trim()) return setError('A lesson needs some words.')
+    if (busy || notice?.level === 'error') return
     setBusy(true)
     setError(null)
     try {
@@ -228,15 +230,15 @@ function EditLesson({
       }
     >
       <FormError message={error} />
-      <Field label="Lesson">
-        {(id) => (
+      <Field label="Lesson" notice={notice}>
+        {(id, a11y) => (
           <textarea
             id={id}
             className="textarea"
             value={text}
             onChange={(event) => setText(event.target.value)}
-            maxLength={2000}
             rows={4}
+            {...a11y}
           />
         )}
       </Field>

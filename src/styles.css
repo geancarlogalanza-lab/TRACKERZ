@@ -1076,6 +1076,33 @@ button, input, textarea, select { font: inherit; color: inherit; }
 /* Date and time sit side by side; both stay comfortable to tap. */
 .field-pair { display: grid; grid-template-columns: 1.35fr 1fr; gap: 8px; }
 
+/* What a form has to say about one value, said right under it. A square
+   pixel marks the line; colour says how much it matters. */
+.field__notice {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin-top: 6px;
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.field__notice::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  transform: translateY(-1px);
+  background: currentColor;
+}
+.field__notice--error { color: var(--danger); }
+.field__notice--warning { color: var(--warn); }
+.field__notice--info { color: var(--text-muted); }
+.field__notice--info::before { opacity: 0.6; }
+.input[aria-invalid="true"],
+.textarea[aria-invalid="true"],
+.select[aria-invalid="true"] { border-color: var(--danger); }
+
 .form-error {
   margin-bottom: 14px;
   padding: 10px 12px;
@@ -1107,66 +1134,160 @@ button, input, textarea, select { font: inherit; color: inherit; }
 
 /* --- Calendar ------------------------------------------------------------ */
 
-.calendar { padding: 16px; }
+/* The month as a floor of pixel tiles over the hearth. Every tile has
+   stepped pixel corners and a one-pixel bevel. This month's days are lit
+   tiles; the neighbouring months' are almost black, numbers barely there.
+   A live run burns ember-orange along its track, an ended one is ash.
+
+   Nearly all of it is static paint, and what moves is small and moves on
+   transform and opacity alone: the tiles settling in when the month
+   changes, the frame snapping to a selected day, today's flame flickering
+   as it lights, and four embers rising from it once the day is secured.
+
+   All of it is bounded. The hearth behind runs an animation loop, and
+   while one runs the browser restyles every running CSS animation on the
+   main thread each frame — so an endless flicker or endless embers here
+   would cost the main thread for as long as the screen is open. Instead
+   the flame flickers for a few seconds and then burns steady, and the
+   embers rise for three rounds and rest; the hearth keeps the screen
+   alive. Reduced motion stills all of it. */
+.calendar {
+  --cal-px: 2px;
+  --cal-tile: #1c2029;
+  --cal-tile-hover: #242935;
+  --cal-tile-future: #15181e;
+  --cal-void: #0b0d11;
+  --cal-void-hover: #12151b;
+  --cal-num-future: #6f7785;
+  --cal-num-void: #363c47;
+  --cal-ember: #ff8a3c;
+  --cal-ember-hot: #ffcb74;
+  --cal-slot: #2a2f39;
+  --cal-frame: #ffe1b5;
+  /* A rectangle with a 2×2 pixel bitten out of each corner. */
+  --cal-notch: polygon(
+    var(--cal-px) 0, calc(100% - var(--cal-px)) 0,
+    calc(100% - var(--cal-px)) var(--cal-px), 100% var(--cal-px),
+    100% calc(100% - var(--cal-px)), calc(100% - var(--cal-px)) calc(100% - var(--cal-px)),
+    calc(100% - var(--cal-px)) 100%, var(--cal-px) 100%,
+    var(--cal-px) calc(100% - var(--cal-px)), 0 calc(100% - var(--cal-px)),
+    0 var(--cal-px), var(--cal-px) var(--cal-px)
+  );
+  padding: 16px;
+}
 .calendar__header {
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+  padding-bottom: 10px;
+  /* A pixel-dashed rule, warm, like the edge of the hearth. */
+  background: repeating-linear-gradient(90deg, rgb(255 138 60 / 0.3) 0 4px, transparent 4px 8px)
+    bottom / 100% var(--cal-px) no-repeat;
 }
 .calendar__month { flex: 1; font-size: var(--fs-lg); font-weight: 600; letter-spacing: -0.01em; }
 
 .calendar__grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
 .calendar__weekday {
-  padding-bottom: 6px;
+  padding: 2px 0 4px;
   text-align: center;
   font-size: var(--fs-2xs);
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   color: var(--text-faint);
 }
 
 .day {
   position: relative;
+  isolation: isolate;
   aspect-ratio: 1;
   min-height: 44px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 6px;
+  padding: 0;
   border: 0;
-  border-radius: var(--radius);
   background: transparent;
   color: var(--text);
   font-size: var(--fs-md);
-  font-weight: 500;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
-  transition: background 0.12s, color 0.12s;
+  /* A new month settles in a row at a time, in three steps, like a scanline.
+     Filled only while waiting its turn, so a finished one is let go. */
+  animation: cal-day-in 0.18s steps(3) calc(var(--row, 0) * 24ms) backwards;
 }
 .day:disabled { cursor: default; }
-.day:not(:disabled):not(.day--selected):hover { background: var(--surface-sunken); }
-.day--outside { color: var(--text-disabled); }
-.day--future { color: var(--text-disabled); }
-.day--today { font-weight: 700; color: var(--accent); }
-.day--today.day--selected { background: var(--accent-soft); }
-.day--selected:not(.day--today),
-.day--selected:not(.day--today):hover {
-  background: var(--accent);
-  color: var(--accent-ink);
+.day:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.day:not(:disabled):active { transform: translateY(1px); }
+
+/* The tile itself, under the number: notched corners, light above, shade below. */
+.day::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  clip-path: var(--cal-notch);
+  background: var(--cal-tile);
+  box-shadow:
+    inset 0 var(--cal-px) 0 rgb(255 255 255 / 0.05),
+    inset 0 calc(-1 * var(--cal-px)) 0 rgb(0 0 0 / 0.35);
+  transition: background-color 0.12s;
+}
+.day:not(:disabled):hover::before,
+.day--selected::before { background-color: var(--cal-tile-hover); }
+
+/* Later this month: still this month's tile, just not lit yet. */
+.day--in.day--future { color: var(--cal-num-future); font-weight: 500; }
+.day--in.day--future::before {
+  background: var(--cal-tile-future);
+  box-shadow: inset 0 var(--cal-px) 0 rgb(255 255 255 / 0.03);
 }
 
+/* A whole day kept: warmth rising from the bottom of the tile — the
+   calendar's one earned reward. Today glows faintly from the start. */
+.day--full::before {
+  background: linear-gradient(to top, rgb(255 110 40 / 0.17), transparent 65%), var(--cal-tile);
+}
+.day--today::before {
+  background: linear-gradient(to top, rgb(255 120 40 / 0.1), transparent 70%), var(--cal-tile);
+}
+.day--today.day--full::before {
+  background: linear-gradient(to top, rgb(255 120 40 / 0.24), transparent 75%), var(--cal-tile);
+}
+.day--today { color: var(--cal-ember-hot); font-weight: 700; }
+
+/* The neighbouring months: almost black, so 30 and 1 never blur together.
+   Still the week's shape, still selectable when past, never this month. */
+.day.day--outside { color: var(--cal-num-void); font-weight: 500; }
+.day.day--outside::before { background: var(--cal-void); box-shadow: none; }
+.day--outside .day__track { opacity: 0.35; }
+.day.day--outside:not(:disabled):hover { color: var(--text-disabled); }
+.day.day--outside:not(:disabled):hover::before { background: var(--cal-void-hover); }
+
+/* The selected day: a pixel frame, corners stepped, number untouched. */
+.day--selected::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  clip-path: var(--cal-notch);
+  box-shadow: inset 0 0 0 var(--cal-px) var(--cal-frame);
+  pointer-events: none;
+  animation: cal-frame-in 0.15s steps(3);
+}
+.day--selected.day--outside::after { box-shadow: inset 0 0 0 var(--cal-px) var(--cal-num-future); }
+
 /* One mark per day: a segment per streak that existed, each in a fixed
-   position. Accent while its run is alive, muted once that run has ended,
-   empty on a missed day — an ended run is a grey line that stops, and the
-   live run is the only thing in colour. Nothing is ever red. */
-.day__track { display: flex; gap: 2px; height: 4px; width: 24px; }
+   position. A coal while its run is alive, ash once that run has ended,
+   an empty slot on a missed day — an ended run is a grey line that stops,
+   and the live run is the only thing on fire. Nothing is ever red. */
+.day__track { display: flex; gap: var(--cal-px); height: 4px; width: 26px; }
 .day__seg {
   flex: 1;
   min-width: 2px;
-  border-radius: 2px;
-  background: var(--track);
+  background: var(--cal-slot);
   position: relative;
   overflow: hidden;
 }
@@ -1174,21 +1295,18 @@ button, input, textarea, select { font: inherit; color: inherit; }
   content: "";
   position: absolute;
   inset: 0;
-  border-radius: 2px;
-  background: var(--accent);
-  opacity: 0.72;
+  background: var(--cal-ember);
+  /* The hot top edge of a coal. */
+  box-shadow: inset 0 1px 0 var(--cal-ember-hot);
+  opacity: 0.78;
   transform: scaleX(0);
   transform-origin: left;
   transition: opacity 0.18s;
 }
 .day__seg--active::after { transform: scaleX(1); }
-.day__seg--past::after { transform: scaleX(1); background: var(--seg-past); opacity: 1; }
-/* A complete day fills a shade stronger — the calendar's one earned reward. */
+.day__seg--past::after { transform: scaleX(1); background: var(--seg-past); box-shadow: none; opacity: 1; }
 .day--full .day__seg--active::after,
 .day--today .day__seg--active::after { opacity: 1; }
-.day--selected:not(.day--today) .day__seg { background: rgb(255 255 255 / 0.32); }
-.day--selected:not(.day--today) .day__seg--active::after { background: currentColor; opacity: 1; }
-.day--selected:not(.day--today) .day__seg--past::after { background: currentColor; opacity: 0.55; }
 /* Only today's bar is in progress, so only today's bar moves. */
 .day--today .day__seg::after {
   transition: transform 0.26s var(--ease) 0.18s, opacity 0.18s;
@@ -1199,13 +1317,57 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .calendar--focus .day__seg--dim { opacity: 0.55; }
 .calendar--focus .day__seg--focus.day__seg--active::after { opacity: 1; }
 
-/* The last streak was just secured: one ring, then rest. */
-.day--pulse::before {
-  content: "";
+/* Today's pixel flame, top right, drawn from box-shadow pixels: ash until
+   something is continued today, then alight — a two-frame flicker as it
+   catches, then steady. */
+.day__flame {
+  --flame: #3d434e;
+  --core: #535a67;
+  position: absolute;
+  /* Above the selection frame, so it can sit in the corner clear of the
+     number. The sprite reaches 8px right of this box and 10px below it,
+     and flickers from its base. */
+  z-index: 1;
+  top: 4px;
+  right: 10px;
+  width: var(--cal-px);
+  height: var(--cal-px);
+  transform-origin: 4px 10px;
+  box-shadow:
+    /*        . . X . .  */  4px 0 0 var(--flame),
+    /*        . X X . .  */  2px 2px 0 var(--flame), 4px 2px 0 var(--flame),
+    /*        . X C X .  */  2px 4px 0 var(--flame), 4px 4px 0 var(--core), 6px 4px 0 var(--flame),
+    /*        X C C X .  */  0 6px 0 var(--flame), 2px 6px 0 var(--core), 4px 6px 0 var(--core), 6px 6px 0 var(--flame),
+    /*        . X X X .  */  2px 8px 0 var(--flame), 4px 8px 0 var(--flame), 6px 8px 0 var(--flame);
+}
+.day--lit .day__flame {
+  --flame: var(--cal-ember);
+  --core: var(--cal-ember-hot);
+  animation: cal-flame 0.9s steps(1) 6;
+}
+
+/* The day is secured: four embers rise from the tile's sides, clear of
+   the number, for three rounds each time the day comes into view. */
+.day__embers { position: absolute; inset: 0; pointer-events: none; }
+.day__embers i {
+  position: absolute;
+  bottom: 8px;
+  left: 16%;
+  width: var(--cal-px);
+  height: var(--cal-px);
+  background: var(--cal-ember-hot);
+  opacity: 0;
+  animation: cal-ember 2.9s linear 3;
+}
+.day__embers i:nth-child(2) { left: 80%; background: var(--cal-ember); animation-duration: 3.3s; animation-delay: 0.8s; }
+.day__embers i:nth-child(3) { left: 26%; background: var(--cal-ember); animation-duration: 3.1s; animation-delay: 1.7s; }
+.day__embers i:nth-child(4) { left: 70%; animation-duration: 2.7s; animation-delay: 2.3s; }
+
+/* The last streak was just secured: one square ring, then rest. */
+.day__ring {
   position: absolute;
   inset: -1px;
-  border-radius: var(--radius);
-  box-shadow: 0 0 0 2px var(--accent);
+  box-shadow: 0 0 0 var(--cal-px) var(--cal-ember-hot);
   opacity: 0;
   pointer-events: none;
   animation: day-pulse 0.55s ease-out 0.5s 1 forwards;
@@ -1752,6 +1914,15 @@ html:has(.app--streaks) { background: #0f1115; }
 }
 @keyframes num-up { from { transform: translateY(0); } to { transform: translateY(-1em); } }
 @keyframes num-down { from { transform: translateY(-1em); } to { transform: translateY(0); } }
+@keyframes cal-day-in { from { opacity: 0; transform: translateY(3px); } }
+@keyframes cal-frame-in { from { opacity: 0; transform: scale(1.12); } }
+@keyframes cal-flame { 50% { transform: scaleY(0.84); } }
+@keyframes cal-ember {
+  0% { transform: translate(0, 0); opacity: 0; }
+  12% { opacity: 1; }
+  60% { transform: translate(2px, -18px); opacity: 0.85; }
+  100% { transform: translate(-1px, -30px); opacity: 0; }
+}
 @keyframes day-pulse {
   0% { opacity: 0.55; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.22); }
@@ -1820,8 +1991,12 @@ html:has(.app--streaks) { background: #0f1115; }
     animation: sheet-in 0.26s var(--ease);
   }
 
-  .day { min-height: 40px; font-size: var(--fs-sm); }
+  .day { min-height: 40px; gap: 4px; font-size: var(--fs-sm); }
   .calendar { padding: 12px; }
+  .calendar__grid { gap: 3px; }
+  .day__track { width: 22px; }
+  /* Smaller tiles: the flame at three-quarter size, still clear of two digits. */
+  .day__flame { top: 1px; right: 8px; scale: 0.75; }
   .srow__count-label { display: none; }
   .srow { padding-left: 4px; padding-right: 4px; column-gap: 10px; }
 

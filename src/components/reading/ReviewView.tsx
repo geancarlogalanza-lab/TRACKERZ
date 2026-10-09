@@ -1,9 +1,10 @@
 import { useId, useState } from 'react'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/Feedback'
-import { FormError } from '../ui/Field'
+import { FieldNotice, FormError } from '../ui/Field'
 import { aim, aimBurst } from '../../lib/ember'
 import { toMessage } from '../../lib/errors'
+import { LIMITS, lengthNotice } from '../../lib/validation'
 import { FLAG_LABEL, ORIGIN_LABEL, proposalsOf } from '../../lib/reading'
 import { plural } from '../../lib/plural'
 import type { Capture, LessonDecision, ProposedLesson } from '../../data/types'
@@ -163,6 +164,7 @@ function ProposalItem({
   const flagged = proposal.flags.length > 0
   const [editText, setEditText] = useState(draft.text)
   const editId = useId()
+  const editNotice = lengthNotice(editText, LIMITS.lessonText)
 
   const shownText = draft.choice === 'original' ? proposal.basis : draft.text
 
@@ -178,14 +180,16 @@ function ProposalItem({
             className="textarea"
             value={editText}
             onChange={(event) => setEditText(event.target.value)}
-            maxLength={2000}
             autoFocus
+            aria-describedby={editNotice ? `${editId}-notice` : undefined}
+            aria-invalid={editNotice?.level === 'error' || undefined}
           />
+          <FieldNotice id={`${editId}-notice`} notice={editNotice} />
           <div className="proposal__actions">
             <Button
               size="sm"
               variant="primary"
-              disabled={!editText.trim()}
+              disabled={!editText.trim() || editNotice?.level === 'error'}
               onClick={() => onChange({ choice: 'edited', text: editText.trim(), editing: false })}
             >
               Keep this version

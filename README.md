@@ -41,12 +41,18 @@ A streak is continued on the day it happens — a missed day can't be filled
 in later, and a streak that ends says "Last streak 8 days · Start again"
 rather than anything harsher.
 
-Each calendar day carries one mark: a short bar with a segment per streak
-that existed that day, each streak always in the same position. A segment is
-in the accent colour while its run is alive, muted grey once that run has
-ended, and empty on a day the streak was missed — so an ended run reads as a
-grey line that stops, and the live run is the only thing in colour. Hover or
-tap a streak's name to see just that streak's history on the calendar.
+The calendar is a floor of pixel tiles with stepped corners. This month's
+days are lit tiles; the neighbouring months' are nearly black with dim
+numbers, so the 30th and the 1st never blur together. Each day carries one
+mark: a short bar with a segment per streak that existed that day, each
+streak always in the same position. A segment burns ember-orange while its
+run is alive, turns to ash once that run has ended, and stays an empty slot
+on a day the streak was missed — so an ended run reads as a grey line that
+stops, and the live run is the only thing on fire. A fully kept day glows
+warm from below. Today wears a small pixel flame, unlit until something is
+continued, with a few embers rising once the day is secured; the selected
+day gets a pixel frame. Hover or tap a streak's name to see just that
+streak's history on the calendar.
 
 Behind the Streak tracker burns a pixel fireplace — a small WebGL shader
 rendered at low resolution and scaled with hard pixel edges. It caps itself
@@ -109,7 +115,7 @@ src/
     streakRepository.ts  streaks, daily records
     readingRepository.ts captures, lessons, the processing call
   hooks/         state, optimistic updates, error recovery
-  lib/           pure helpers: dates, streak counting, colour, error messages
+  lib/           pure helpers: dates, streak counting, input rules, colour, error messages
   components/
     ui/          Button, Modal, Menu, Field, Feedback, SectionNav — shared by every area
     pending/     subject cards, task rows, forms, the strip, the month calendar
@@ -205,10 +211,23 @@ User
 Every table has a `user_id` and RLS policies of the form
 `auth.uid() = user_id`, so one account can only ever reach its own rows.
 Deletes cascade: removing a subject removes its tasks, removing a streak
-removes its records, removing a capture removes its lessons. A lesson's
-foreign key covers its capture *and* its owner, so it can never point at
-someone else's capture. College and Reading share no tables and no keys —
-only the signed-in user.
+removes its records, removing a capture removes its lessons. Every child's
+foreign key covers its parent *and* its owner — a subject's trimester, a
+task's subject, a record's streak, a lesson's capture — so nothing can
+point at another account's rows. College and Reading share no tables and no
+keys — only the signed-in user.
+
+Input is checked in two layers. `src/lib/validation.ts` holds the rules
+every form uses, with three levels: an **error** holds the save (a plan
+after a deadline that's still ahead, a time with no date, a half-typed
+date, text over its limit), a **warning** lets it through (a deadline
+that has already passed, a likely duplicate, a year that looks like a
+typo), and a **note** just informs. Messages appear under the field they
+concern, and nothing typed is ever cleared or cut short. The database then
+enforces the structural rules again — required text, lengths, a time
+needing its date, ownership — so a request that skips the forms can't
+store broken data either. Rules that depend on the moment, like whether a
+deadline has passed, live only in the client.
 
 A capture keeps only Claude's validated, structured proposal, not the raw
 request or response. Text is small: a thousand captures with their lessons

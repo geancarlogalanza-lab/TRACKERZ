@@ -1,3 +1,4 @@
+import { memo, type CSSProperties } from 'react'
 import { IconButton, Button } from '../ui/Button'
 import { ChevronLeftIcon, ChevronRightIcon } from '../ui/Icons'
 import { formatLongDay, monthName, toISODate } from '../../lib/dates'
@@ -30,14 +31,24 @@ interface CalendarProps {
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 /**
- * A month grid, Monday first. Each day carries one mark: a short track with a
- * segment per streak that existed that day. A segment is filled in the accent
- * while its run is alive, muted once that run has ended, and empty on a day
+ * A month grid, Monday first, drawn as a floor of pixel tiles over the
+ * hearth.
+ *
+ * Each day carries one mark: a short track with a segment per streak that
+ * existed that day. A segment burns ember-orange while its run is alive,
+ * turns to ash once that run has ended, and stays an empty slot on a day
  * the streak was missed — so an ended run reads as a grey line that stops,
- * and the live run is the only thing in colour. Future days have no track
+ * and the live run is the only thing on fire. Future days have no track
  * and can't be selected; there is nothing there yet.
+ *
+ * Days of the neighbouring months are dark tiles with dim numbers — still
+ * there to keep the weeks whole, and still selectable when they're past,
+ * but never mistaken for this month. Today wears a small pixel flame:
+ * unlit until something is continued, burning after, with a few embers
+ * rising from it once the day is secured. The selected day gets a
+ * pixel-cornered frame, so the two are never confused.
  */
-export function Calendar({
+export const Calendar = memo(function Calendar({
   year,
   month,
   today,
@@ -91,29 +102,34 @@ export function Calendar({
         </IconButton>
       </header>
 
-      <div className="calendar__grid" role="grid">
+      {/* Keyed by month, so a new month settles in rather than swapping in place. */}
+      <div className="calendar__grid" role="grid" key={`${year}-${month}`}>
         {WEEKDAYS.map((day) => (
           <div className="calendar__weekday" key={day} role="columnheader" aria-label={day}>
             {day.slice(0, 1)}
           </div>
         ))}
 
-        {cells.map((date) => {
+        {cells.map((date, index) => {
           const iso = toISODate(date)
+          const inMonth = date.getMonth() === month
           const isFuture = iso > today
           const isToday = iso === today
           const segments = isFuture ? [] : segmentsFor(iso)
           const existed = segments.length
           const done = segments.filter((segment) => segment.state !== 'empty').length
+          const full = existed > 0 && done === existed
+          // Today's fire: lit by the first continuation, secured by the last.
+          const lit = isToday && done > 0
 
           const classes = [
             'day',
-            date.getMonth() !== month ? 'day--outside' : '',
+            inMonth ? 'day--in' : 'day--outside',
             isFuture ? 'day--future' : '',
             isToday ? 'day--today' : '',
+            lit ? 'day--lit' : '',
             iso === selected ? 'day--selected' : '',
-            existed > 0 && done === existed ? 'day--full' : '',
-            isToday && pulseToday ? 'day--pulse' : '',
+            full ? 'day--full' : '',
           ]
             .filter(Boolean)
             .join(' ')
@@ -126,12 +142,14 @@ export function Calendar({
               type="button"
               role="gridcell"
               className={classes}
+              style={{ '--row': Math.floor(index / 7) } as CSSProperties}
               disabled={isFuture}
               aria-selected={iso === selected}
-              aria-label={`${formatLongDay(iso)}${summary}`}
+              aria-current={isToday ? 'date' : undefined}
+              aria-label={`${formatLongDay(iso)}${isToday ? ', today' : ''}${summary}`}
               onClick={() => onSelect(iso)}
             >
-              <span>{date.getDate()}</span>
+              <span className="day__num">{date.getDate()}</span>
               <span className="day__track" aria-hidden="true">
                 {segments.map((segment) => {
                   const focus =
@@ -148,10 +166,21 @@ export function Calendar({
                   )
                 })}
               </span>
+              {isToday && <span className="day__flame" aria-hidden="true" />}
+              {isToday && full && (
+                // A handful of embers, drawn and moved by CSS alone.
+                <span className="day__embers" aria-hidden="true">
+                  <i />
+                  <i />
+                  <i />
+                  <i />
+                </span>
+              )}
+              {isToday && pulseToday && <span className="day__ring" aria-hidden="true" />}
             </button>
           )
         })}
       </div>
     </section>
   )
-}
+})
