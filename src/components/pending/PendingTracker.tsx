@@ -11,7 +11,7 @@ import { SubjectCard } from './SubjectCard'
 import { SubjectForm } from './SubjectForm'
 import { TaskForm } from './TaskForm'
 import { deadlineState, today as todayISO } from '../../lib/dates'
-import { ember } from '../../lib/ember'
+import { burst, ember } from '../../lib/ember'
 import { needsAttention } from '../../lib/focus'
 import { indexTasksByDay } from '../../lib/taskCalendar'
 import { plural } from '../../lib/plural'
@@ -95,14 +95,16 @@ export function PendingTracker({ store, view, nav }: PendingTrackerProps) {
   }, [subjects, tasksBySubject])
 
   /**
-   * Finishing a task lights a small ember at its check. Finishing the last
-   * thing that needed attention lights a larger one: the list is clear.
+   * Finishing a task throws sparks off its check and lights a small ember
+   * there. Finishing the last thing that needed attention does both bigger:
+   * the list is clear.
    */
   const completeTask = (taskId: string, origin?: Element) => {
     if (origin) {
       const pressing = tasks.filter((task) => needsAttention(task, today))
-      const clearsList = pressing.length === 1 && pressing[0].id === taskId
-      ember(origin, clearsList ? 'blaze' : 'flick')
+      const size = pressing.length === 1 && pressing[0].id === taskId ? 'blaze' : 'flick'
+      burst(origin, size)
+      ember(origin, size)
     }
     void store.completeTask(taskId)
   }

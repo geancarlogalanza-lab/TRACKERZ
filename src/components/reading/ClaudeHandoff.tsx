@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { Button } from '../ui/Button'
 import { FormError } from '../ui/Field'
 import { Modal } from '../ui/Modal'
+import { aimBurst } from '../../lib/ember'
 import { buildManualPrompt } from '../../lib/reading'
 import { toMessage } from '../../lib/errors'
 import type { Capture } from '../../data/types'
@@ -38,7 +39,7 @@ export function ClaudeHandoff({ capture, onApply, onDone, onClose }: ClaudeHando
     }
   }
 
-  const submit = async () => {
+  const submit = async (submitter: HTMLElement | null) => {
     setError(null)
     if (!reply.trim()) return setError("Paste Claude's reply first.")
     // The copied instructions fence the notes in <notes>; Claude's answer never does.
@@ -47,9 +48,12 @@ export function ClaudeHandoff({ capture, onApply, onDone, onClose }: ClaudeHando
         "That's the text you copied for Claude, not Claude's answer. Paste it into a new chat on claude.ai, send it, then paste Claude's reply here.",
       )
     }
+    // Thrown only once the reply is accepted, never for one that's turned away.
+    const pop = submitter ? aimBurst(submitter) : null
     setBusy(true)
     try {
       await onApply(reply)
+      pop?.('kindle')
       onDone()
     } catch (caught) {
       setError(toMessage(caught, 'Could not save that reply.'))

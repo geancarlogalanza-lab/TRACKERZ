@@ -54,6 +54,16 @@ at 30 frames a second, stops when the tab is hidden, and shows a single
 still frame when the system prefers reduced motion. Panels over it are
 lightly frosted so the glow reads through while text stays legible.
 
+The few actions that mean progress answer with the same fire: finishing a
+task, continuing or starting a streak, saving reading notes, adding Claude's
+reply to Review, and saving lessons to the library. The press throws a burst
+of pixel sparks — the button's outline flashes white-hot and shatters
+outward, the sparks drift up as they cool, a few pixel stars twinkle — and a
+small ember catches once the action has landed. It is drawn on tiny canvases
+in the hearth's grain, runs one animation loop only while something burns,
+and is skipped entirely for anyone who prefers reduced motion. Everything
+else, from editing to navigation, stays quiet.
+
 **Reading** — the loop is read, capture, review, keep, see again.
 **Capture** takes the book, its author, your raw notes, and optionally the
 passage that prompted them and a page or location. You take them to Claude

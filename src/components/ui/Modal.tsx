@@ -9,7 +9,7 @@ interface ModalProps {
   /** Rendered in the footer; usually the cancel and submit buttons. */
   footer?: ReactNode
   /** Wraps the body in a form so Enter submits, which keeps entry quick. */
-  onSubmit?: () => void
+  onSubmit?: (submitter: HTMLElement | null) => void
 }
 
 /**
@@ -93,7 +93,13 @@ export function Modal({ title, onClose, children, footer, onSubmit }: ModalProps
           <form
             onSubmit={(event) => {
               event.preventDefault()
-              onSubmit()
+              // The button that submitted, so an action can answer from it.
+              // Enter submits through the default button; older browsers
+              // don't say, so fall back to it.
+              const submitter =
+                (event.nativeEvent as SubmitEvent).submitter ??
+                event.currentTarget.querySelector<HTMLElement>('button[type="submit"]')
+              onSubmit(submitter)
             }}
             style={{ display: 'contents' }}
           >

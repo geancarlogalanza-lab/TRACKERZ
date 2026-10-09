@@ -4,6 +4,7 @@ import { ConfirmDialog } from '../ui/Feedback'
 import { ClaudeHandoff } from './ClaudeHandoff'
 import { Field, FormError } from '../ui/Field'
 import { Menu } from '../ui/Menu'
+import { aimBurst } from '../../lib/ember'
 import { AUTO_PROCESS, booksOf, isStale } from '../../lib/reading'
 import { toMessage } from '../../lib/errors'
 import type { Capture } from '../../data/types'
@@ -59,6 +60,8 @@ export function CaptureView({ store, onOpenReview, onError }: CaptureViewProps) 
     if (!title.trim() || !author.trim()) return setError('Add the book and its author.')
     if (!notes.trim()) return setError('Write your notes first.')
 
+    const submitter = (event.nativeEvent as SubmitEvent).submitter
+    const pop = submitter ? aimBurst(submitter) : null
     setBusy(true)
     try {
       const created = await store.addCapture({
@@ -68,6 +71,7 @@ export function CaptureView({ store, onOpenReview, onError }: CaptureViewProps) 
         source_passage: passage,
         location,
       })
+      pop?.('kindle')
       setNotes('')
       setPassage('')
       setLocation('')

@@ -7,7 +7,7 @@ import { Calendar, type DaySegment } from './Calendar'
 import { DayDetails } from './DayDetails'
 import { TodayPanel } from './TodayPanel'
 import { today as todayISO } from '../../lib/dates'
-import { aim, ember } from '../../lib/ember'
+import { aim, burst, ember } from '../../lib/ember'
 import {
   activeRunOn,
   datesForStreak,
@@ -124,13 +124,16 @@ export function StreakTracker({ store }: { store: ReturnType<typeof useStreakTra
     const stillOwed = streaks.filter((item) => standings.get(item.id)?.state !== 'done').length
     const milestone = isMilestone(nextCount)
     const secured = stillOwed === 1
-    // Aimed now, lit once the save succeeds — with the count, not before it.
+    // Moments that close something burn a little bigger.
+    const size = milestone || secured ? 'blaze' : 'kindle'
+    // The press throws sparks at once; the ember is aimed now and lit once
+    // the save succeeds — with the count, not before it.
+    burst(origin, size)
     const ignite = aim(origin)
 
     await store.continueStreak(streak.id)
     setJustContinued(streak.id)
-    // Moments that close something burn a little bigger.
-    ignite(milestone || secured ? 'blaze' : 'kindle', { anchor: 0.85 })
+    ignite(size, { anchor: 0.85 })
 
     if (milestone) {
       setCelebrating(streak.id)
@@ -221,6 +224,7 @@ export function StreakTracker({ store }: { store: ReturnType<typeof useStreakTra
           label="Streak name"
           placeholder="Pushups"
           submitLabel="Start today"
+          sparks="kindle"
           onSubmit={async (name) => {
             // A new streak begins today. If it's the only one, today is secured.
             const stillOwed = streaks.filter((item) => standings.get(item.id)?.state !== 'done').length

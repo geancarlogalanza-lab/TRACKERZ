@@ -2,7 +2,7 @@ import { useId, useState } from 'react'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/Feedback'
 import { FormError } from '../ui/Field'
-import { ember } from '../../lib/ember'
+import { aim, aimBurst } from '../../lib/ember'
 import { toMessage } from '../../lib/errors'
 import { FLAG_LABEL, ORIGIN_LABEL, proposalsOf } from '../../lib/reading'
 import { plural } from '../../lib/plural'
@@ -78,13 +78,18 @@ function ReviewCard({ capture, store }: { capture: Capture; store: ReadingStore 
   )
 
   const save = async (event: React.MouseEvent<HTMLButtonElement>) => {
-    const button = event.currentTarget
+    // Aimed now: by the time the save lands, this card has left the screen.
+    const pop = aimBurst(event.currentTarget)
+    const ignite = aim(event.currentTarget)
     setBusy(true)
     setError(null)
     try {
       await store.saveReview(capture, kept)
       // Lessons joining the library is the moment this whole loop exists for.
-      if (kept.length > 0 && button.isConnected) ember(button, 'kindle', { anchor: 0.85 })
+      if (kept.length > 0) {
+        pop('kindle')
+        ignite('kindle', { anchor: 0.85 })
+      }
     } catch (caught) {
       setError(toMessage(caught, 'Could not save these lessons.'))
       setBusy(false)

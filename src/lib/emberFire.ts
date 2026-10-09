@@ -97,6 +97,9 @@ export class EmberFire {
   private readonly spec: Spec
   private heat: Float32Array
   private next: Float32Array
+  /** Per column, rebuilt each step: how much random loss to allow, and the taper. */
+  private readonly lossScale: Float32Array
+  private readonly taper: Float32Array
   private readonly sparks: Spark[] = []
   private readonly sparkTimes: number[]
   private taken = 0
@@ -112,6 +115,8 @@ export class EmberFire {
     this.rows = this.spec.rows
     this.heat = new Float32Array(this.cols * this.rows)
     this.next = new Float32Array(this.cols * this.rows)
+    this.lossScale = new Float32Array(this.cols)
+    this.taper = new Float32Array(this.cols)
     // Sparks leave while the source burns and just after, never all at once.
     const window = this.spec.burn + 6
     this.sparkTimes = Array.from({ length: this.spec.sparks }, () =>
@@ -123,10 +128,13 @@ export class EmberFire {
   /**
    * Brings the fire up to `ms` after it lit, on its eased clock. Takes at
    * most `limit` steps, so a long stall (a hidden tab) is not replayed.
+   * Returns whether anything moved, so an unchanged frame needn't be redrawn.
    */
-  advance(ms: number, limit = 8): void {
+  advance(ms: number, limit = 8): boolean {
     const due = this.spec.preroll + emberSteps(ms)
+    const before = this.taken
     for (let i = 0; i < limit && this.taken < due; i += 1) this.step()
+    return this.taken !== before
   }
 
   /** True once the flame has burnt out and the last spark has faded. */
@@ -136,10 +144,9 @@ export class EmberFire {
 
   /** Advances the fire by one step. */
   step(): void {
-    const { cols, rows, heat, next, spec } = this
+    const { cols, rows, heat, next, spec, lossScale, taper } = this
     const centre = (cols - 1) / 2
     const half = Math.max(1, this.sourceCells / 2)
-    const at = (x: number, y: number) => (x < 0 || x >= cols ? 0 : heat[y * cols + x])
 
     // Every cell takes its heat from just below it — mostly from one cell
     // picked at random to either side, partly from the three together — and
@@ -148,14 +155,25 @@ export class EmberFire {
     // lets some columns keep their heat longer than others, which is what
     // splits the body into a few tongues that sway as they climb.
     const sway = this.taken * 0.21 + this.seed
+    // The wave and the taper depend only on the column: work them out once
+    // per step rather than once per cell.
+    for (let x = 0; x < cols; x += 1) {
+      const offCentre = Math.abs(x - centre) / half
+      const wave = 0.5 + 0.5 * Math.sin((x / half) * 3.4 + sway)
+      lossScale[x] = spec.decay * (0.45 + 1.1 * wave)
+      taper[x] = spec.pinch * offCentre * offCentre
+    }
     for (let y = 0; y < rows - 1; y += 1) {
+      const below = (y + 1) * cols
       for (let x = 0; x < cols; x += 1) {
-        const picked = at(x + Math.floor(Math.random() * 3) - 1, y + 1)
-        const shared = (at(x - 1, y + 1) + 2 * at(x, y + 1) + at(x + 1, y + 1)) / 4
-        const offCentre = Math.abs(x - centre) / half
-        const wave = 0.5 + 0.5 * Math.sin((x / half) * 3.4 + sway)
-        const loss =
-          Math.random() * spec.decay * (0.45 + 1.1 * wave) + spec.pinch * offCentre * offCentre
+        // Beyond either edge there is no heat.
+        const left = x > 0 ? heat[below + x - 1] : 0
+        const middle = heat[below + x]
+        const right = x < cols - 1 ? heat[below + x + 1] : 0
+        const side = Math.floor(Math.random() * 3) - 1
+        const picked = side < 0 ? left : side > 0 ? right : middle
+        const shared = (left + 2 * middle + right) / 4
+        const loss = Math.random() * lossScale[x] + taper[x]
         next[y * cols + x] = Math.max(0, picked * 0.8 + shared * 0.2 - loss)
       }
     }
@@ -196,7 +214,8 @@ export class EmberFire {
     }
 
     let hottest = 0
-    for (const value of this.heat) if (value > hottest) hottest = value
+    const current = this.heat
+    for (let i = 0; i < current.length; i += 1) if (current[i] > hottest) hottest = current[i]
     this.hottest = hottest
     this.taken += 1
   }

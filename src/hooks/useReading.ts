@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import * as repo from '../data/readingRepository'
 import type { Capture, CaptureInput, Lesson } from '../data/types'
 import { toMessage } from '../lib/errors'
-import { AUTO_PROCESS, PROMPT_VERSION, parseReply } from '../lib/reading'
+import { AUTO_PROCESS, PROMPT_VERSION, isStale, parseReply } from '../lib/reading'
 
 /** How often to look for finished processing while something is in flight. */
 const POLL_MS = 4000
@@ -49,10 +49,15 @@ export function useReading() {
     setReloadToken((token) => token + 1)
   }, [])
 
-  const inFlight = captures.some((item) => item.status === 'queued' || item.status === 'processing')
+  // Only a run on the server changes a capture behind the page's back. A
+  // queued capture waits for a reply pasted here, and a run that went stale
+  // waits for a retry, so neither is worth asking about every few seconds —
+  // and nobody needs an answer while the page is hidden.
+  const inFlight = captures.some((item) => item.status === 'processing' && !isStale(item))
   useEffect(() => {
     if (!inFlight) return
     const timer = setInterval(async () => {
+      if (document.hidden) return
       try {
         setCaptures(await repo.listOpenCaptures())
       } catch {
