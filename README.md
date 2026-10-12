@@ -41,9 +41,11 @@ A streak is continued on the day it happens — a missed day can't be filled
 in later, and a streak that ends says "Last streak 8 days · Start again"
 rather than anything harsher.
 
-The calendar is a floor of pixel tiles with stepped corners. This month's
-days are lit tiles; the neighbouring months' are nearly black with dim
-numbers, so the 30th and the 1st never blur together. Each day carries one
+The calendar is a floor of pixel tiles with stepped corners, only as many
+rows as the month needs — four to six. This month's days are lit tiles; the
+previous month's last days, shown only where they put the 1st under its
+weekday, are nearly black with dim numbers, so the 30th and the 1st never
+blur together, and nothing follows the month's last day. Each day carries one
 mark: a short bar with a segment per streak that existed that day, each
 streak always in the same position. A segment burns ember-orange while its
 run is alive, turns to ash once that run has ended, and stays an empty slot
@@ -57,8 +59,13 @@ streak's history on the calendar.
 Behind the Streak tracker burns a pixel fireplace — a small WebGL shader
 rendered at low resolution and scaled with hard pixel edges. It caps itself
 at 30 frames a second, stops when the tab is hidden, and shows a single
-still frame when the system prefers reduced motion. Panels over it are
-lightly frosted so the glow reads through while text stays legible.
+still frame when the system prefers reduced motion. The same shader sets
+the calendar's outline alight: a line of coals all the way round, flames
+licking off it — low along the bottom, climbing the sides, tallest along
+the top — and the odd single-pixel ember drifting away. The panels are
+opaque and sit over the canvas, so the fire only ever shows outside the
+calendar's border. Every panel and streak row on the screen shares the
+tiles' pixel frame; only the calendar's burns.
 
 The few actions that mean progress answer with the same fire: finishing a
 task, continuing or starting a streak, saving reading notes, adding Claude's

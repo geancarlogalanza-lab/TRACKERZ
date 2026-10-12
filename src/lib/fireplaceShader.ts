@@ -13,7 +13,8 @@
  *
  * Changes from the original: unused Shadertoy uniforms removed; `scale` added
  * so the fire's size in the viewport is independent of the canvas resolution;
- * `floorLine` added so the fire can sit above a fixed control on phones.
+ * `floorLine` added so the fire can sit above a fixed control on phones;
+ * `edge` and burningEdge() added, so the streak calendar's outline burns.
  */
 
 export const VERTEX_SHADER = `
@@ -31,6 +32,7 @@ uniform float time;
 uniform vec4 mouse;
 uniform float scale;      // virtual pixels per canvas pixel
 uniform float floorLine;  // virtual pixels the fire is raised by
+uniform vec4 edge;        // the calendar's outline in canvas pixels: left, bottom, right, top (right < left: none)
 
 // --- Simplex noise (Ashima Arts, MIT) ---------------------------------------
 
@@ -197,14 +199,75 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
   fragColor = vec4(max(fire, sparks) + smoke, 1.0);
 }
 
+// --- The calendar's burning edge ---------------------------------------------
+// The calendar panel sits over this canvas, so anything drawn inside its
+// outline is hidden: only what burns outward shows, hugging its border.
+// Worked in canvas pixels, so it has the hearth's grain. A line of coals
+// runs all the way round; flames lick off it, low along the bottom,
+// climbing the sides and tallest along the top, and crawl slowly round the
+// edge; now and then a single-pixel ember lifts off and fades. Same noise,
+// same colour ramp, same spark orange as the hearth.
+
+vec3 burningEdge(vec2 p) {
+  if (edge.z <= edge.x) return vec3(0.0);
+  vec2 outside = max(edge.xy - p, p - edge.zw);
+  if (outside.x < 0.0 && outside.y < 0.0) return vec3(0.0); // under the panel
+  float d = length(max(outside, 0.0));
+  if (d > 20.0) return vec3(0.0);
+
+  // Where round the outline this is, clockwise from the top-left corner,
+  // so tongues can travel along the edge and round its corners.
+  vec2 c = clamp(p, edge.xy, edge.zw);
+  float w = edge.z - edge.x;
+  float h = edge.w - edge.y;
+  float s;
+  if (c.y >= edge.w) s = c.x - edge.x;
+  else if (c.x >= edge.z) s = w + edge.w - c.y;
+  else if (c.y <= edge.y) s = w + h + edge.z - c.x;
+  else s = 2.0 * w + h + c.y - edge.y;
+
+  // Fire climbs: 0 along the bottom edge, 1 along the top.
+  float up = clamp((p.y - edge.y) / max(h, 1.0), 0.0, 1.0);
+
+  // A dim line of coals the whole way round...
+  float coals = d < 1.2 ? 0.34 + 0.22 * snoise(vec3(0.3 * s, 0.0, 0.8 * time)) : 0.0;
+  // ...and tongues licking off it: their length crawls round the edge, and
+  // rising turbulence, stretched upward like a flame, breaks them apart
+  // with dark between.
+  float tongues = noiseStack(vec3(0.12 * s - 0.55 * time, 0.0, 0.3 * time), 2, 0.5);
+  float churn = noiseStack(vec3(0.24 * p.x, 0.09 * p.y - 1.6 * time, 0.5 * time), 2, 0.45);
+  float reach = mix(1.4, 9.0, up * up) * (0.35 + 1.3 * tongues);
+  // Turbulence lengthens a lick or shrinks it to nothing, right down to the
+  // edge, so the fire breaks into tongues instead of an even outline.
+  float lick = reach * max(0.0, 1.6 * churn * churn - 0.1);
+  float flame = lick > 0.0 ? clamp(1.0 - d / lick, 0.0, 1.0) * (0.55 + 0.5 * churn) : 0.0;
+  float heat = max(coals, flame);
+  float h3 = heat * heat * heat;
+  vec3 fire = 1.5 * vec3(heat, h3, h3 * h3);
+
+  // Embers drift up and away from the middle, a pixel at a time.
+  float away = sign(p.x - 0.5 * (edge.x + edge.z));
+  vec2 drift = p - vec2(away * 2.5 * time, 8.0 * time);
+  vec2 cell = floor(drift / 5.0);
+  float r = prng(cell + vec2(31.0, 7.0));
+  if (r < 0.035 && d > 1.5) {
+    vec2 spot = floor(vec2(fract(r * 91.7), fract(r * 57.3)) * 5.0);
+    if (all(equal(floor(drift) - cell * 5.0, spot))) {
+      fire = max(fire, (1.0 - d / 20.0) * 1.3 * vec3(1.0, 0.36, 0.07));
+    }
+  }
+  return fire;
+}
+
 void main() {
+  vec3 edgeFire = burningEdge(gl_FragCoord.xy);
   vec2 coord = gl_FragCoord.xy * scale - vec2(0.0, floorLine);
   if (coord.y < 0.0) {
-    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+    gl_FragColor = vec4(edgeFire, 1.0);
     return;
   }
   vec4 color;
   mainImage(color, coord);
-  gl_FragColor = color;
+  gl_FragColor = vec4(max(color.rgb, edgeFire), 1.0);
 }
 `

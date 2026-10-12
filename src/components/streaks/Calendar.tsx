@@ -1,6 +1,7 @@
 import { memo, type CSSProperties } from 'react'
 import { IconButton, Button } from '../ui/Button'
 import { ChevronLeftIcon, ChevronRightIcon } from '../ui/Icons'
+import { setBurningEdge } from '../../lib/burningEdge'
 import { formatLongDay, monthName, toISODate } from '../../lib/dates'
 import type { SegmentState } from '../../lib/streakMath'
 import type { ISODate } from '../../data/types'
@@ -41,9 +42,11 @@ const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
  * and the live run is the only thing on fire. Future days have no track
  * and can't be selected; there is nothing there yet.
  *
- * Days of the neighbouring months are dark tiles with dim numbers — still
- * there to keep the weeks whole, and still selectable when they're past,
- * but never mistaken for this month. Today wears a small pixel flame:
+ * The previous month's last days, where the 1st needs them to sit under its
+ * weekday, are dark tiles with dim numbers — still selectable when they're
+ * past, but never mistaken for this month. Nothing follows the month's last
+ * day, so the grid is as short as the month allows. Today wears a small
+ * pixel flame:
  * unlit until something is continued, burning after, with a few embers
  * rising from it once the day is secured. The selected day gets a
  * pixel-cornered frame, so the two are never confused.
@@ -61,14 +64,15 @@ export const Calendar = memo(function Calendar({
 }: CalendarProps) {
   const firstOfMonth = new Date(year, month, 1)
   // getDay() is Sunday-based; shift so Monday starts the week.
-  const leadingBlanks = (firstOfMonth.getDay() + 6) % 7
+  const leadingDays = (firstOfMonth.getDay() + 6) % 7
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
 
+  // The last days of the previous month that put the 1st under its weekday,
+  // then every day of this month — and nothing after. The grid takes as
+  // many rows as that needs, four to six, and the last row simply ends.
   const cells: Date[] = []
-  const cursor = new Date(year, month, 1 - leadingBlanks)
-  // Six rows always, so the grid never changes height between months.
-  for (let index = 0; index < 42; index += 1) {
-    cells.push(new Date(cursor))
-    cursor.setDate(cursor.getDate() + 1)
+  for (let offset = -leadingDays; offset < daysInMonth; offset += 1) {
+    cells.push(new Date(year, month, 1 + offset))
   }
 
   const step = (delta: number) => {
@@ -84,6 +88,8 @@ export const Calendar = memo(function Calendar({
 
   return (
     <section
+      // The hearth burns around this outline (see Fireplace).
+      ref={setBurningEdge}
       className={`calendar${focusStreakId ? ' calendar--focus' : ''}`}
       aria-label="Streak calendar"
     >
