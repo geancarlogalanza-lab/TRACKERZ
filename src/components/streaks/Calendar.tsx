@@ -1,7 +1,7 @@
 import { memo, type CSSProperties } from 'react'
+import { BurningEdge } from '../ui/BurningEdge'
 import { IconButton, Button } from '../ui/Button'
 import { ChevronLeftIcon, ChevronRightIcon } from '../ui/Icons'
-import { setBurningEdge } from '../../lib/burningEdge'
 import { formatLongDay, monthName, toISODate } from '../../lib/dates'
 import type { SegmentState } from '../../lib/streakMath'
 import type { ISODate } from '../../data/types'
@@ -87,106 +87,106 @@ export const Calendar = memo(function Calendar({
   }
 
   return (
-    <section
-      // The hearth burns around this outline (see Fireplace).
-      ref={setBurningEdge}
-      className={`calendar${focusStreakId ? ' calendar--focus' : ''}`}
-      aria-label="Streak calendar"
-    >
-      <header className="calendar__header">
-        <h2 className="calendar__month" aria-live="polite">
-          {monthName(month)} {year}
-        </h2>
-        <Button size="sm" onClick={goToToday}>
-          Today
-        </Button>
-        <IconButton label="Previous month" onClick={() => step(-1)}>
-          <ChevronLeftIcon />
-        </IconButton>
-        <IconButton label="Next month" onClick={() => step(1)}>
-          <ChevronRightIcon />
-        </IconButton>
-      </header>
+    <BurningEdge>
+      <section
+        className={`calendar${focusStreakId ? ' calendar--focus' : ''}`}
+        aria-label="Streak calendar"
+      >
+        <header className="calendar__header">
+          <h2 className="calendar__month" aria-live="polite">
+            {monthName(month)} {year}
+          </h2>
+          <Button size="sm" onClick={goToToday}>
+            Today
+          </Button>
+          <IconButton label="Previous month" onClick={() => step(-1)}>
+            <ChevronLeftIcon />
+          </IconButton>
+          <IconButton label="Next month" onClick={() => step(1)}>
+            <ChevronRightIcon />
+          </IconButton>
+        </header>
 
-      {/* Keyed by month, so a new month settles in rather than swapping in place. */}
-      <div className="calendar__grid" role="grid" key={`${year}-${month}`}>
-        {WEEKDAYS.map((day) => (
-          <div className="calendar__weekday" key={day} role="columnheader" aria-label={day}>
-            {day.slice(0, 1)}
-          </div>
-        ))}
+        {/* Keyed by month, so a new month settles in rather than swapping in place. */}
+        <div className="calendar__grid" role="grid" key={`${year}-${month}`}>
+          {WEEKDAYS.map((day) => (
+            <div className="calendar__weekday" key={day} role="columnheader" aria-label={day}>
+              {day.slice(0, 1)}
+            </div>
+          ))}
 
-        {cells.map((date, index) => {
-          const iso = toISODate(date)
-          const inMonth = date.getMonth() === month
-          const isFuture = iso > today
-          const isToday = iso === today
-          const segments = isFuture ? [] : segmentsFor(iso)
-          const existed = segments.length
-          const done = segments.filter((segment) => segment.state !== 'empty').length
-          const full = existed > 0 && done === existed
-          // Today's fire: lit by the first continuation, secured by the last.
-          const lit = isToday && done > 0
+          {cells.map((date, index) => {
+            const iso = toISODate(date)
+            const inMonth = date.getMonth() === month
+            const isFuture = iso > today
+            const isToday = iso === today
+            const segments = isFuture ? [] : segmentsFor(iso)
+            const existed = segments.length
+            const done = segments.filter((segment) => segment.state !== 'empty').length
+            const full = existed > 0 && done === existed
+            // Today's fire: lit by the first continuation, secured by the last.
+            const lit = isToday && done > 0
 
-          const classes = [
-            'day',
-            inMonth ? 'day--in' : 'day--outside',
-            isFuture ? 'day--future' : '',
-            isToday ? 'day--today' : '',
-            lit ? 'day--lit' : '',
-            iso === selected ? 'day--selected' : '',
-            full ? 'day--full' : '',
-          ]
-            .filter(Boolean)
-            .join(' ')
+            const classes = [
+              'day',
+              inMonth ? 'day--in' : 'day--outside',
+              isFuture ? 'day--future' : '',
+              isToday ? 'day--today' : '',
+              lit ? 'day--lit' : '',
+              iso === selected ? 'day--selected' : '',
+              full ? 'day--full' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')
 
-          const summary = existed === 0 ? '' : `, ${done} of ${existed} continued`
+            const summary = existed === 0 ? '' : `, ${done} of ${existed} continued`
 
-          return (
-            <button
-              key={iso}
-              type="button"
-              role="gridcell"
-              className={classes}
-              style={{ '--row': Math.floor(index / 7) } as CSSProperties}
-              disabled={isFuture}
-              aria-selected={iso === selected}
-              aria-current={isToday ? 'date' : undefined}
-              aria-label={`${formatLongDay(iso)}${isToday ? ', today' : ''}${summary}`}
-              onClick={() => onSelect(iso)}
-            >
-              <span className="day__num">{date.getDate()}</span>
-              <span className="day__track" aria-hidden="true">
-                {segments.map((segment) => {
-                  const focus =
-                    focusStreakId === null
-                      ? ''
-                      : segment.streakId === focusStreakId
-                        ? ' day__seg--focus'
-                        : ' day__seg--dim'
-                  return (
-                    <span
-                      key={segment.streakId}
-                      className={`day__seg day__seg--${segment.state}${focus}`}
-                    />
-                  )
-                })}
-              </span>
-              {isToday && <span className="day__flame" aria-hidden="true" />}
-              {isToday && full && (
-                // A handful of embers, drawn and moved by CSS alone.
-                <span className="day__embers" aria-hidden="true">
-                  <i />
-                  <i />
-                  <i />
-                  <i />
+            return (
+              <button
+                key={iso}
+                type="button"
+                role="gridcell"
+                className={classes}
+                style={{ '--row': Math.floor(index / 7) } as CSSProperties}
+                disabled={isFuture}
+                aria-selected={iso === selected}
+                aria-current={isToday ? 'date' : undefined}
+                aria-label={`${formatLongDay(iso)}${isToday ? ', today' : ''}${summary}`}
+                onClick={() => onSelect(iso)}
+              >
+                <span className="day__num">{date.getDate()}</span>
+                <span className="day__track" aria-hidden="true">
+                  {segments.map((segment) => {
+                    const focus =
+                      focusStreakId === null
+                        ? ''
+                        : segment.streakId === focusStreakId
+                          ? ' day__seg--focus'
+                          : ' day__seg--dim'
+                    return (
+                      <span
+                        key={segment.streakId}
+                        className={`day__seg day__seg--${segment.state}${focus}`}
+                      />
+                    )
+                  })}
                 </span>
-              )}
-              {isToday && pulseToday && <span className="day__ring" aria-hidden="true" />}
-            </button>
-          )
-        })}
-      </div>
-    </section>
+                {isToday && <span className="day__flame" aria-hidden="true" />}
+                {isToday && full && (
+                  // A handful of embers, drawn and moved by CSS alone.
+                  <span className="day__embers" aria-hidden="true">
+                    <i />
+                    <i />
+                    <i />
+                    <i />
+                  </span>
+                )}
+                {isToday && pulseToday && <span className="day__ring" aria-hidden="true" />}
+              </button>
+            )
+          })}
+        </div>
+      </section>
+    </BurningEdge>
   )
 })

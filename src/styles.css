@@ -278,7 +278,27 @@ button, input, textarea, select { font: inherit; color: inherit; }
    App shell
    ========================================================================== */
 
-.app { min-height: 100%; display: flex; flex-direction: column; }
+.app {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  /* A calendar's fire reaches past its sides (BurningEdge); on a phone that
+     is past the screen. Clip, unlike hidden, makes no scroll container, so
+     the sticky header is unaffected. */
+  overflow-x: clip;
+}
+
+/* A calendar whose outline burns (BurningEdge.tsx). The wrapper is not a
+   stacking context, so the fire paints beneath the page's content — under
+   the opaque calendar and anything else near it — and scrolls with it. */
+.burning { position: relative; }
+.burning__fire {
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
 
 /* The header's contents line up with the page's content column rather
    than hugging the window edges, so the two never drift apart on a wide
@@ -799,8 +819,8 @@ button, input, textarea, select { font: inherit; color: inherit; }
 /* The task calendar and its day panel wear the same pixel frame as the
    Streaks screen's panels: square, a pixel bitten out of each corner, 2px
    of edge. The calendar's burns — coal on a seam, with flames licking off
-   its outline from a transparent canvas behind the page (Fireplace, edge
-   variant). The panels are opaque, so the fire only shows outside them. */
+   its outline (BurningEdge). The panels are opaque, so the fire only shows
+   outside them. */
 .cal-layout .tcal,
 .cal-layout .dpanel {
   --frame: var(--border-strong);
@@ -1209,9 +1229,9 @@ button, input, textarea, select { font: inherit; color: inherit; }
 
 /* Every panel here wears the frame of a tile: square, a pixel bitten out of
    each corner, 2px of edge. The calendar's is the one that burns — coal-red
-   on a dark seam, with the hearth's own flames licking off its outline
-   (burningEdge in fireplaceShader.ts). The panels are opaque, so those
-   flames can only ever show outside the border, never over a date. */
+   on a dark seam, with the hearth's flames licking off its outline
+   (BurningEdge). The panels are opaque, so those flames can only ever show
+   outside the border, never over a date. */
 .app--streaks .calendar,
 .app--streaks .spanel {
   --frame: #2d313a;
@@ -1639,8 +1659,6 @@ button, input, textarea, select { font: inherit; color: inherit; }
   image-rendering: crisp-edges;
   pointer-events: none;
 }
-/* Only the task calendar's burning outline: the page shows through. */
-.hearth--edge { background: transparent; }
 
 /* The Streaks screen takes the dark palette from its first frame — before
    WebGL has even started — so switching to it never flashes light panels

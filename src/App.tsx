@@ -118,8 +118,6 @@ export default function App({ onBoot }: AppProps = {}) {
         .join(' ')}
     >
       {showHearth && <Fireplace onReady={onHearthReady} />}
-      {/* No hearth here: only the task calendar's outline burns. */}
-      {area === 'college' && college === 'calendar' && <Fireplace variant="edge" />}
       <header className="header">
         <div className="header__brand">
           <BrandMark />

@@ -1,6 +1,6 @@
+import { BurningEdge } from '../ui/BurningEdge'
 import { IconButton, Button } from '../ui/Button'
 import { ChevronLeftIcon, ChevronRightIcon } from '../ui/Icons'
-import { setBurningEdge } from '../../lib/burningEdge'
 import { formatLongDay, monthName, toISODate } from '../../lib/dates'
 import { dayEntries, describeDay, type DayTasks } from '../../lib/taskCalendar'
 import type { ISODate, Subject } from '../../data/types'
@@ -67,107 +67,108 @@ export function TaskCalendar({
   }
 
   return (
-    // The outline burns (see Fireplace, variant "edge").
-    <section ref={setBurningEdge} className="tcal" aria-label="Task calendar">
-      <header className="tcal__header">
-        <h2 className="tcal__month" aria-live="polite">
-          {monthName(month)} {year}
-        </h2>
-        <Button size="sm" onClick={goToToday}>
-          Today
-        </Button>
-        <IconButton label="Previous month" onClick={() => step(-1)}>
-          <ChevronLeftIcon />
-        </IconButton>
-        <IconButton label="Next month" onClick={() => step(1)}>
-          <ChevronRightIcon />
-        </IconButton>
-      </header>
+    <BurningEdge>
+      <section className="tcal" aria-label="Task calendar">
+        <header className="tcal__header">
+          <h2 className="tcal__month" aria-live="polite">
+            {monthName(month)} {year}
+          </h2>
+          <Button size="sm" onClick={goToToday}>
+            Today
+          </Button>
+          <IconButton label="Previous month" onClick={() => step(-1)}>
+            <ChevronLeftIcon />
+          </IconButton>
+          <IconButton label="Next month" onClick={() => step(1)}>
+            <ChevronRightIcon />
+          </IconButton>
+        </header>
 
-      <div className="tcal__grid" role="grid">
-        {WEEKDAYS.map((day) => (
-          <div className="tcal__weekday" key={day} role="columnheader" aria-label={day}>
-            <span className="tcal__weekday-long">{day}</span>
-            <span className="tcal__weekday-short">{day.slice(0, 1)}</span>
-          </div>
-        ))}
+        <div className="tcal__grid" role="grid">
+          {WEEKDAYS.map((day) => (
+            <div className="tcal__weekday" key={day} role="columnheader" aria-label={day}>
+              <span className="tcal__weekday-long">{day}</span>
+              <span className="tcal__weekday-short">{day.slice(0, 1)}</span>
+            </div>
+          ))}
 
-        {cells.map((date) => {
-          const iso = toISODate(date)
-          const day = byDay.get(iso)
-          const entries = dayEntries(day)
-          const outside = date.getMonth() !== month
+          {cells.map((date) => {
+            const iso = toISODate(date)
+            const day = byDay.get(iso)
+            const entries = dayEntries(day)
+            const outside = date.getMonth() !== month
 
-          const classes = [
-            'cday',
-            outside ? 'cday--outside' : '',
-            iso === today ? 'cday--today' : '',
-            iso === selected ? 'cday--selected' : '',
-          ]
-            .filter(Boolean)
-            .join(' ')
+            const classes = [
+              'cday',
+              outside ? 'cday--outside' : '',
+              iso === today ? 'cday--today' : '',
+              iso === selected ? 'cday--selected' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')
 
-          const hiddenRows = entries.length - PREVIEW_ROWS
-          const hiddenMarks = entries.length - PREVIEW_MARKS
+            const hiddenRows = entries.length - PREVIEW_ROWS
+            const hiddenMarks = entries.length - PREVIEW_MARKS
 
-          return (
-            <button
-              key={iso}
-              type="button"
-              role="gridcell"
-              className={classes}
-              aria-selected={iso === selected}
-              aria-label={`${formatLongDay(iso)}${describeDay(day)}`}
-              onClick={() => onSelect(iso)}
-            >
-              <span className="cday__num">{date.getDate()}</span>
+            return (
+              <button
+                key={iso}
+                type="button"
+                role="gridcell"
+                className={classes}
+                aria-selected={iso === selected}
+                aria-label={`${formatLongDay(iso)}${describeDay(day)}`}
+                onClick={() => onSelect(iso)}
+              >
+                <span className="cday__num">{date.getDate()}</span>
 
-              {/* Phones: silhouettes only — a circle plans, a triangle is due. */}
-              {entries.length > 0 && (
-                <span className="cday__marks" aria-hidden="true">
-                  {entries.slice(0, PREVIEW_MARKS).map((entry, index) => (
-                    <span
-                      key={`${entry.task.id}-${entry.kind}-${index}`}
-                      className={`cmark cmark--${entry.kind}`}
-                      style={{ color: subjectsById.get(entry.task.subject_id)?.color }}
-                    />
-                  ))}
-                  {hiddenMarks > 0 && <span className="cday__more-mark">+{hiddenMarks}</span>}
-                </span>
-              )}
-
-              {/* Wider screens: the titles themselves. */}
-              {entries.length > 0 && (
-                <span className="cday__list" aria-hidden="true">
-                  {entries.slice(0, PREVIEW_ROWS).map((entry, index) => (
-                    <span
-                      key={`${entry.task.id}-${entry.kind}-${index}`}
-                      className={`centry centry--${entry.kind}`}
-                    >
+                {/* Phones: silhouettes only — a circle plans, a triangle is due. */}
+                {entries.length > 0 && (
+                  <span className="cday__marks" aria-hidden="true">
+                    {entries.slice(0, PREVIEW_MARKS).map((entry, index) => (
                       <span
+                        key={`${entry.task.id}-${entry.kind}-${index}`}
                         className={`cmark cmark--${entry.kind}`}
                         style={{ color: subjectsById.get(entry.task.subject_id)?.color }}
                       />
-                      <span className="centry__title">{entry.task.title}</span>
-                    </span>
-                  ))}
-                  {hiddenRows > 0 && <span className="cday__more">+{hiddenRows} more</span>}
-                </span>
-              )}
-            </button>
-          )
-        })}
-      </div>
+                    ))}
+                    {hiddenMarks > 0 && <span className="cday__more-mark">+{hiddenMarks}</span>}
+                  </span>
+                )}
 
-      {/* Names the two shapes once, so neither cell nor panel has to. */}
-      <p className="tcal__legend">
-        <span>
-          <i className="cmark cmark--planned" /> Planned
-        </span>
-        <span>
-          <i className="cmark cmark--due" /> Due
-        </span>
-      </p>
-    </section>
+                {/* Wider screens: the titles themselves. */}
+                {entries.length > 0 && (
+                  <span className="cday__list" aria-hidden="true">
+                    {entries.slice(0, PREVIEW_ROWS).map((entry, index) => (
+                      <span
+                        key={`${entry.task.id}-${entry.kind}-${index}`}
+                        className={`centry centry--${entry.kind}`}
+                      >
+                        <span
+                          className={`cmark cmark--${entry.kind}`}
+                          style={{ color: subjectsById.get(entry.task.subject_id)?.color }}
+                        />
+                        <span className="centry__title">{entry.task.title}</span>
+                      </span>
+                    ))}
+                    {hiddenRows > 0 && <span className="cday__more">+{hiddenRows} more</span>}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Names the two shapes once, so neither cell nor panel has to. */}
+        <p className="tcal__legend">
+          <span>
+            <i className="cmark cmark--planned" /> Planned
+          </span>
+          <span>
+            <i className="cmark cmark--due" /> Due
+          </span>
+        </p>
+      </section>
+    </BurningEdge>
   )
 }

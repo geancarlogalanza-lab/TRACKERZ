@@ -14,7 +14,7 @@
  * Changes from the original: unused Shadertoy uniforms removed; `scale` added
  * so the fire's size in the viewport is independent of the canvas resolution;
  * `floorLine` added so the fire can sit above a fixed control on phones;
- * `edge` and burningEdge() added, so the streak calendar's outline burns.
+ * the noise is shared with the calendars' burning edge (EDGE below).
  */
 
 export const VERTEX_SHADER = `
@@ -131,9 +131,8 @@ vec2 noiseStackUV(vec3 pos, int octaves, float falloff, float diff) {
 `
 
 /**
- * A calendar's burning outline, shared by the hearth (the streak calendar)
- * and the edge-only fire (the task calendar). Needs NOISE and the time
- * uniform.
+ * A calendar's burning outline (BurningEdge.tsx), drawn with the hearth's
+ * noise, colour ramp and spark orange. Needs NOISE and the time uniform.
  */
 const EDGE = `
 uniform vec4 edge; // the calendar's outline in canvas pixels: left, bottom, right, top (right < left: none)
@@ -271,23 +270,22 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
 
   fragColor = vec4(max(fire, sparks) + smoke, 1.0);
 }
-${EDGE}
+
 void main() {
-  vec3 edgeFire = burningEdge(gl_FragCoord.xy).rgb;
   vec2 coord = gl_FragCoord.xy * scale - vec2(0.0, floorLine);
   if (coord.y < 0.0) {
-    gl_FragColor = vec4(edgeFire, 1.0);
+    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
     return;
   }
   vec4 color;
   mainImage(color, coord);
-  gl_FragColor = vec4(max(color.rgb, edgeFire), 1.0);
+  gl_FragColor = color;
 }
 `
 
 /**
- * The burning edge on its own, for a page with no hearth behind it: the
- * canvas is transparent everywhere but round the calendar. On a dark page
+ * The burning edge, drawn on a canvas that sits round a calendar and moves
+ * with it: transparent everywhere but along the calendar's outline. On a dark page
  * the fire is light, as opaque as its brightest channel, so black adds
  * nothing. On a light page the white-hot end would vanish into the
  * background, so the ramp is held between red-orange and gold and heat

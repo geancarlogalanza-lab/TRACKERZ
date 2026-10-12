@@ -31,11 +31,9 @@ meaning alone. It is a view, not a second store — every task it draws comes
 from the same array the subject grid renders, so adding, editing, completing
 or moving a task moves the calendar with it and the two cannot disagree.
 Like the streak calendar, it shows the previous month's last days only where
-the 1st needs them, ends on the month's last day, and its outline burns: the
-same fire as the streak calendar's edge, drawn without the hearth on a
-transparent canvas behind the page — in gold and red-orange on a light page.
-The calendar and its day panel share the Streaks panels' pixel frame. The
-fire draws only while the calendar is on screen.
+the 1st needs them, ends on the month's last day, and its outline burns with
+the same fire as the streak calendar's — in gold and red-orange on a light
+page. The calendar and its day panel share the Streaks panels' pixel frame.
 
 **Streaks** — a Today panel and a month calendar. Continue a streak with one tap,
 then write whatever you like about the day if you want to. The text is stored
@@ -65,13 +63,19 @@ streak's history on the calendar.
 Behind the Streak tracker burns a pixel fireplace — a small WebGL shader
 rendered at low resolution and scaled with hard pixel edges. It caps itself
 at 30 frames a second, stops when the tab is hidden, and shows a single
-still frame when the system prefers reduced motion. The same shader sets
-the calendar's outline alight: a line of coals all the way round, flames
-licking off it — low along the bottom, climbing the sides, tallest along
-the top — and the odd single-pixel ember drifting away. The panels are
-opaque and sit over the canvas, so the fire only ever shows outside the
-calendar's border. Every panel and streak row on the screen shares the
-tiles' pixel frame; only the calendar's burns.
+still frame when the system prefers reduced motion.
+
+Both calendars' outlines burn with the hearth's noise, colours and grain: a
+line of coals all the way round, flames licking off it — low along the
+bottom, climbing the sides, tallest along the top — and the odd
+single-pixel ember drifting away. Each fire is a small WebGL canvas round
+its calendar, inside the page and behind it (`BurningEdge`), so it scrolls
+with the calendar as one piece — a phone scrolls the page off the main
+thread, and a fire drawn anywhere else would trail behind. The calendar is
+opaque, so the fire only ever shows outside its border. It draws thirty
+times a second only while the calendar is on screen. Every panel and streak
+row on the Streaks screen shares the tiles' pixel frame; only the
+calendar's burns.
 
 The few actions that mean progress answer with the same fire: finishing a
 task, continuing or starting a streak, saving reading notes, adding Claude's
