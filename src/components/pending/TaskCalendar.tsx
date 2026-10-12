@@ -1,5 +1,6 @@
 import { IconButton, Button } from '../ui/Button'
 import { ChevronLeftIcon, ChevronRightIcon } from '../ui/Icons'
+import { setBurningEdge } from '../../lib/burningEdge'
 import { formatLongDay, monthName, toISODate } from '../../lib/dates'
 import { dayEntries, describeDay, type DayTasks } from '../../lib/taskCalendar'
 import type { ISODate, Subject } from '../../data/types'
@@ -43,17 +44,15 @@ export function TaskCalendar({
 }: TaskCalendarProps) {
   const firstOfMonth = new Date(year, month, 1)
   // getDay() is Sunday-based; shift so Monday starts the week.
-  const leadingBlanks = (firstOfMonth.getDay() + 6) % 7
+  const leadingDays = (firstOfMonth.getDay() + 6) % 7
   const daysInMonth = new Date(year, month + 1, 0).getDate()
-  // Only the weeks this month actually needs — four to six, never a trailing
-  // empty row.
-  const weeks = Math.ceil((leadingBlanks + daysInMonth) / 7)
 
+  // The last days of the previous month that put the 1st under its weekday,
+  // then every day of this month — and nothing after. The grid takes as
+  // many weeks as that needs, four to six, and the last week simply ends.
   const cells: Date[] = []
-  const cursor = new Date(year, month, 1 - leadingBlanks)
-  for (let index = 0; index < weeks * 7; index += 1) {
-    cells.push(new Date(cursor))
-    cursor.setDate(cursor.getDate() + 1)
+  for (let offset = -leadingDays; offset < daysInMonth; offset += 1) {
+    cells.push(new Date(year, month, 1 + offset))
   }
 
   const step = (delta: number) => {
@@ -68,7 +67,8 @@ export function TaskCalendar({
   }
 
   return (
-    <section className="tcal" aria-label="Task calendar">
+    // The outline burns (see Fireplace, variant "edge").
+    <section ref={setBurningEdge} className="tcal" aria-label="Task calendar">
       <header className="tcal__header">
         <h2 className="tcal__month" aria-live="polite">
           {monthName(month)} {year}

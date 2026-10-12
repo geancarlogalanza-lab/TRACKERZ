@@ -30,6 +30,12 @@ and subject colour rides along on top of the shape rather than carrying the
 meaning alone. It is a view, not a second store — every task it draws comes
 from the same array the subject grid renders, so adding, editing, completing
 or moving a task moves the calendar with it and the two cannot disagree.
+Like the streak calendar, it shows the previous month's last days only where
+the 1st needs them, ends on the month's last day, and its outline burns: the
+same fire as the streak calendar's edge, drawn without the hearth on a
+transparent canvas behind the page — in gold and red-orange on a light page.
+The calendar and its day panel share the Streaks panels' pixel frame. The
+fire draws only while the calendar is on screen.
 
 **Streaks** — a Today panel and a month calendar. Continue a streak with one tap,
 then write whatever you like about the day if you want to. The text is stored

@@ -70,6 +70,20 @@
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   /* How an ember meets the surface under it: see "Ember" below. */
   --ember-blend: normal;
+  /* The pixel grain shared by both calendars and the panels round them. */
+  --cal-px: 2px;
+  /* A rectangle with a 2×2 pixel bitten out of each corner. */
+  --cal-notch: polygon(
+    var(--cal-px) 0, calc(100% - var(--cal-px)) 0,
+    calc(100% - var(--cal-px)) var(--cal-px), 100% var(--cal-px),
+    100% calc(100% - var(--cal-px)), calc(100% - var(--cal-px)) calc(100% - var(--cal-px)),
+    calc(100% - var(--cal-px)) 100%, var(--cal-px) 100%,
+    var(--cal-px) calc(100% - var(--cal-px)), 0 calc(100% - var(--cal-px)),
+    0 var(--cal-px), var(--cal-px) var(--cal-px)
+  );
+  /* A burning calendar's frame: coal on a seam that parts it from the page. */
+  --coal-frame: #c4541f;
+  --coal-seam: #f6d6c4;
   --header-h: 56px;
   --content: 1120px;
   color-scheme: light;
@@ -110,6 +124,8 @@
     --shadow: 0 4px 14px -2px rgb(0 0 0 / 0.45);
     --shadow-lg: 0 18px 44px -8px rgb(0 0 0 / 0.6);
     --ember-blend: screen;
+    --coal-frame: #8f3514;
+    --coal-seam: #2a1109;
     color-scheme: dark;
   }
 }
@@ -779,6 +795,24 @@ button, input, textarea, select { font: inherit; color: inherit; }
 }
 
 .tcal { padding: 16px 16px 14px; }
+
+/* The task calendar and its day panel wear the same pixel frame as the
+   Streaks screen's panels: square, a pixel bitten out of each corner, 2px
+   of edge. The calendar's burns — coal on a seam, with flames licking off
+   its outline from a transparent canvas behind the page (Fireplace, edge
+   variant). The panels are opaque, so the fire only shows outside them. */
+.cal-layout .tcal,
+.cal-layout .dpanel {
+  --frame: var(--border-strong);
+  --seam: transparent;
+  border: 0;
+  border-radius: 0;
+  clip-path: var(--cal-notch);
+  box-shadow:
+    inset 0 0 0 var(--cal-px) var(--frame),
+    inset 0 0 0 calc(var(--cal-px) + 1px) var(--seam);
+}
+.cal-layout .tcal { --frame: var(--coal-frame); --seam: var(--coal-seam); }
 .tcal__header {
   display: flex;
   align-items: center;
@@ -1152,11 +1186,11 @@ button, input, textarea, select { font: inherit; color: inherit; }
    embers rise for three rounds and rest; the hearth keeps the screen
    alive. Reduced motion stills all of it. */
 
-/* The Streaks screen's pixel language, shared by the calendar's tiles, the
-   panels' frames and the streak rows: one 2px grain, one notched corner,
-   one set of hearth colours. */
+/* The Streaks screen's hearth colours, shared by the calendar's tiles, the
+   panels' frames and the streak rows; the pixel grain and the notched
+   corner (--cal-px, --cal-notch) are on :root, shared with the task
+   calendar. */
 .app--streaks {
-  --cal-px: 2px;
   --cal-tile: #1c2029;
   --cal-tile-hover: #242935;
   --cal-tile-future: #15181e;
@@ -1168,15 +1202,6 @@ button, input, textarea, select { font: inherit; color: inherit; }
   --cal-ember-hot: #ffcb74;
   --cal-slot: #2a2f39;
   --cal-frame: #ffe1b5;
-  /* A rectangle with a 2×2 pixel bitten out of each corner. */
-  --cal-notch: polygon(
-    var(--cal-px) 0, calc(100% - var(--cal-px)) 0,
-    calc(100% - var(--cal-px)) var(--cal-px), 100% var(--cal-px),
-    100% calc(100% - var(--cal-px)), calc(100% - var(--cal-px)) calc(100% - var(--cal-px)),
-    calc(100% - var(--cal-px)) 100%, var(--cal-px) 100%,
-    var(--cal-px) calc(100% - var(--cal-px)), 0 calc(100% - var(--cal-px)),
-    0 var(--cal-px), var(--cal-px) var(--cal-px)
-  );
   /* The warm pixel-dashed rule under a panel's heading. */
   --cal-rule: repeating-linear-gradient(90deg, rgb(255 138 60 / 0.3) 0 4px, transparent 4px 8px)
     bottom / 100% var(--cal-px) no-repeat;
@@ -1614,6 +1639,8 @@ button, input, textarea, select { font: inherit; color: inherit; }
   image-rendering: crisp-edges;
   pointer-events: none;
 }
+/* Only the task calendar's burning outline: the page shows through. */
+.hearth--edge { background: transparent; }
 
 /* The Streaks screen takes the dark palette from its first frame — before
    WebGL has even started — so switching to it never flashes light panels

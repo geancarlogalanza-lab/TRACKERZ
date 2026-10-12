@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { burningEdge, onBurningEdgeChange } from '../../lib/burningEdge'
-import { FRAGMENT_SHADER, VERTEX_SHADER } from '../../lib/fireplaceShader'
+import { EDGE_FRAGMENT_SHADER, FRAGMENT_SHADER, VERTEX_SHADER } from '../../lib/fireplaceShader'
 
 /** Canvas rows. Each is ~3 screen pixels tall on a phone: the pixel look. */
 const CANVAS_HEIGHT = 240
@@ -17,9 +17,16 @@ const NARROW_MAX_WIDTH = 700
 const NARROW_FLOOR_PX = 84
 
 interface FireplaceProps {
+  /**
+   * The whole hearth behind the Streak tracker, or only the burning edge
+   * round a calendar on a page with no hearth — the task calendar.
+   */
+  variant?: 'hearth' | 'edge'
   /** Reports whether WebGL came up, so the page can dress for it or not. */
-  onReady: (ok: boolean) => void
+  onReady?: (ok: boolean) => void
 }
+
+const ignore = () => {}
 
 /**
  * The fireplace behind the Streak tracker. It renders at a fraction of the
@@ -27,16 +34,22 @@ interface FireplaceProps {
  * edges, caps itself at 30 frames a second, stops entirely when the tab is
  * hidden, and draws a single still frame when the person prefers reduced
  * motion. Unmounting releases the GL context.
+ *
+ * Either way it sets alight the outline of whichever calendar has
+ * registered itself (burningEdge.ts). The edge variant draws nothing else:
+ * a transparent canvas with fire only round that outline, in the same
+ * grain, at the same pace.
  */
-export function Fireplace({ onReady }: FireplaceProps) {
+export function Fireplace({ variant = 'hearth', onReady = ignore }: FireplaceProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
+    const edgeOnly = variant === 'edge'
 
     const gl = canvas.getContext('webgl', {
-      alpha: false,
+      alpha: edgeOnly,
       antialias: false,
       depth: false,
       stencil: false,
@@ -61,7 +74,7 @@ export function Fireplace({ onReady }: FireplaceProps) {
     }
 
     const vertex = compile(gl.VERTEX_SHADER, VERTEX_SHADER)
-    const fragment = compile(gl.FRAGMENT_SHADER, FRAGMENT_SHADER)
+    const fragment = compile(gl.FRAGMENT_SHADER, edgeOnly ? EDGE_FRAGMENT_SHADER : FRAGMENT_SHADER)
     const program = gl.createProgram()
     if (!vertex || !fragment || !program) {
       onReady(false)
@@ -95,6 +108,7 @@ export function Fireplace({ onReady }: FireplaceProps) {
     const uScale = gl.getUniformLocation(program, 'scale')
     const uFloor = gl.getUniformLocation(program, 'floorLine')
     const uEdge = gl.getUniformLocation(program, 'edge')
+    const uOnLight = gl.getUniformLocation(program, 'onLight')
     gl.uniform4f(uMouse, 0.5, 0.5, 0, 0)
     gl.uniform4f(uEdge, 0, 0, -1, -1)
 
@@ -150,18 +164,57 @@ export function Fireplace({ onReady }: FireplaceProps) {
 
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
     let frame = 0
+    let timer = 0
     let lastDrawn = 0
     const started = performance.now()
 
+    /** Whether the edge fire has anything on screen to burn round. */
+    const edgeInView = () => {
+      const margin = 24 // canvas pixels: as far as flames and embers reach
+      return (
+        edgeNow[2] > edgeNow[0] &&
+        edgeNow[2] > -margin &&
+        edgeNow[0] < canvas.width + margin &&
+        edgeNow[3] > -margin &&
+        edgeNow[1] < canvas.height + margin
+      )
+    }
+
     const loop = (now: number) => {
+      frame = 0
       // Thirty frames a second — but a calendar that has just moved (a
       // scroll, a new month's height) is redrawn at once, so its flames
       // stay on its border rather than trailing behind.
       const moved = placeEdge()
-      if (moved || now - lastDrawn >= FRAME_INTERVAL) {
+      // The edge's own timer wakes it a touch early, so a frame landing a
+      // hair short of the interval still counts as due.
+      const due = edgeOnly ? FRAME_INTERVAL - 4 : FRAME_INTERVAL
+      if (moved || now - lastDrawn >= due) {
         lastDrawn = now
         draw((now - started) / 1000)
       }
+      if (!edgeOnly) {
+        frame = requestAnimationFrame(loop)
+        return
+      }
+      // The edge alone asks for no frame between its own: a frame on a page
+      // that otherwise sits still is work for the browser even when nothing
+      // is drawn. It waits for the next one due, and stops altogether while
+      // its calendar is off screen or gone; a scroll, a resize or a new
+      // calendar wakes it (kick).
+      if (edgeInView()) {
+        timer = window.setTimeout(() => {
+          timer = 0
+          frame = requestAnimationFrame(loop)
+        }, Math.max(0, FRAME_INTERVAL - (performance.now() - lastDrawn) - 10))
+      }
+    }
+
+    /** Something moved: burn on the very next frame (edge variant). */
+    const kick = () => {
+      if (!edgeOnly || reducedMotion.matches || document.hidden || frame) return
+      window.clearTimeout(timer)
+      timer = 0
       frame = requestAnimationFrame(loop)
     }
 
@@ -176,8 +229,15 @@ export function Fireplace({ onReady }: FireplaceProps) {
       })
     }
 
-    const run = () => {
+    const stop = () => {
       cancelAnimationFrame(frame)
+      frame = 0
+      window.clearTimeout(timer)
+      timer = 0
+    }
+
+    const run = () => {
+      stop()
       if (reducedMotion.matches) {
         drawStill()
       } else {
@@ -186,23 +246,35 @@ export function Fireplace({ onReady }: FireplaceProps) {
     }
 
     const onVisibility = () => {
-      if (document.hidden) cancelAnimationFrame(frame)
+      if (document.hidden) stop()
       else run()
     }
     const onResize = () => {
       resize()
       edgeDrawn[0] = Number.NaN
       if (reducedMotion.matches) drawStill()
+      else kick()
     }
     const onEdgeMoved = () => {
       if (reducedMotion.matches) drawStill()
+      else kick()
     }
     const edgeSize = new ResizeObserver(onEdgeMoved)
+    // A light page takes the fire differently from a dark one; the theme
+    // says which this is, as it does for the click embers.
+    const readTheme = () => {
+      const element = burningEdge() ?? document.documentElement
+      const light = getComputedStyle(element).getPropertyValue('--ember-blend').trim() !== 'screen'
+      gl.uniform1f(uOnLight, light ? 1 : 0)
+      edgeDrawn[0] = Number.NaN
+      onEdgeMoved()
+    }
+    const scheme = window.matchMedia('(prefers-color-scheme: dark)')
     const watchEdge = () => {
       edgeSize.disconnect()
       const element = burningEdge()
       if (element) edgeSize.observe(element)
-      onEdgeMoved()
+      readTheme()
     }
     watchEdge()
     const stopWatchingEdge = onBurningEdgeChange(watchEdge)
@@ -211,23 +283,25 @@ export function Fireplace({ onReady }: FireplaceProps) {
     // quiet rather than spin, and let the page drop the hearth dressing.
     const onContextLost = (event: Event) => {
       event.preventDefault()
-      cancelAnimationFrame(frame)
+      stop()
       onReady(false)
     }
 
     run()
     reducedMotion.addEventListener('change', run)
+    scheme.addEventListener('change', readTheme)
     document.addEventListener('visibilitychange', onVisibility)
     window.addEventListener('resize', onResize)
     window.addEventListener('scroll', onEdgeMoved, { passive: true, capture: true })
     canvas.addEventListener('webglcontextlost', onContextLost)
 
     return () => {
-      cancelAnimationFrame(frame)
+      stop()
       cancelAnimationFrame(stillFrame)
       stopWatchingEdge()
       edgeSize.disconnect()
       reducedMotion.removeEventListener('change', run)
+      scheme.removeEventListener('change', readTheme)
       document.removeEventListener('visibilitychange', onVisibility)
       window.removeEventListener('resize', onResize)
       window.removeEventListener('scroll', onEdgeMoved, { capture: true })
@@ -241,7 +315,7 @@ export function Fireplace({ onReady }: FireplaceProps) {
       gl.deleteShader(vertex)
       gl.deleteShader(fragment)
     }
-  }, [onReady])
+  }, [onReady, variant])
 
-  return <canvas ref={canvasRef} className="hearth" aria-hidden="true" />
+  return <canvas ref={canvasRef} className={`hearth${variant === 'edge' ? ' hearth--edge' : ''}`} aria-hidden="true" />
 }
