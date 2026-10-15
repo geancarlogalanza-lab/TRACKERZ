@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react'
+import { BurningEdge } from '../ui/BurningEdge'
 import { Button } from '../ui/Button'
 import { PlusIcon } from '../ui/Icons'
 import { Menu } from '../ui/Menu'
@@ -195,8 +196,9 @@ export function PendingTracker({ store, view, nav }: PendingTrackerProps) {
         </div>
       )}
 
+      {/* The Tasks page's panels burn like the calendars, from one fire. */}
       {!loading && !loadError && view === 'subjects' && (
-        <>
+        <BurningEdge panels=".focus, .subject">
           <FocusStrip
             tasks={tasks}
             subjectsById={subjectsById}
@@ -230,7 +232,7 @@ export function PendingTracker({ store, view, nav }: PendingTrackerProps) {
               ))}
             </div>
           )}
-        </>
+        </BurningEdge>
       )}
 
       {/* On a phone the primary action sits within thumb reach. */}

@@ -21,7 +21,8 @@ palette, and the picker refuses one that would look like a subject you
 already have. A task carries a title, an optional description, when you plan to
 work on it, and when it is due. Anything overdue or landing today is pulled to
 a short list at the top. Completing a task removes it; the subject stays until
-you delete it yourself.
+you delete it yourself. The cards and that list wear the same pixel frame as
+the calendars, and their outlines burn with the same fire.
 
 **Calendar** shows the same tasks as a month. Each day
 previews the first few items and hands the rest to a day panel, so a busy week
@@ -76,6 +77,19 @@ opaque, so the fire only ever shows outside its border. It draws thirty
 times a second only while the calendar is on screen. Every panel and streak
 row on the Streaks screen shares the tiles' pixel frame; only the
 calendar's burns.
+
+The Tasks page burns the same way: every subject card and the Needs
+attention list. One canvas behind the whole page draws all their outlines
+at once — a page may only hold a handful of WebGL contexts, fewer on a
+phone, so a fire per card would run out — and follows the cards as they
+are added, completed, reordered or reflowed. In the narrow gaps between
+panels the flames hold down to their coals, so each card keeps a glowing
+outline while the fire licks outward from the group rather than walling up
+between its cards. Because the Tasks page is the first screen, its fire
+only catches once the loading screen has gone — setting up WebGL can hold
+the page for a moment the first time — and every fire fades in on its
+first frame, its shader compiled in the background where the browser
+allows.
 
 The few actions that mean progress answer with the same fire: finishing a
 task, continuing or starting a streak, saving reading notes, adding Claude's

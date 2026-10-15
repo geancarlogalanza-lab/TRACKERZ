@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ComponentType } from 're
 import type { BootReport } from './bootReport'
 import { GeanLoader, type CompletionTiming, type LoaderError, type LoaderPhase } from './GeanLoader'
 import { AppBoundary } from './AppBoundary'
+import { markLoaderGone } from './loaderGone'
 
 type AppComponent = ComponentType<{ onBoot?: (report: BootReport) => void }>
 
@@ -268,7 +269,10 @@ export function Boot() {
           error={error}
           completion={completion}
           onRetry={retry}
-          onFinished={() => setRevealed(true)}
+          onFinished={() => {
+            setRevealed(true)
+            markLoaderGone()
+          }}
         />
       )}
     </>

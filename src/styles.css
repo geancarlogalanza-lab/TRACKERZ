@@ -288,9 +288,11 @@ button, input, textarea, select { font: inherit; color: inherit; }
   overflow-x: clip;
 }
 
-/* A calendar whose outline burns (BurningEdge.tsx). The wrapper is not a
-   stacking context, so the fire paints beneath the page's content — under
-   the opaque calendar and anything else near it — and scrolls with it. */
+/* Panels whose outlines burn (BurningEdge.tsx): a calendar, or the Tasks
+   page's cards. The wrapper is not a stacking context, so the fire paints
+   beneath the page's content — under the opaque panels and anything else
+   near them — and scrolls with it. It fades in once its first frame is
+   drawn, so it catches rather than snapping on. */
 .burning { position: relative; }
 .burning__fire {
   position: absolute;
@@ -298,7 +300,10 @@ button, input, textarea, select { font: inherit; color: inherit; }
   pointer-events: none;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+  opacity: 0;
+  transition: opacity 0.6s var(--ease);
 }
+.burning__fire--lit { opacity: 1; }
 
 /* The header's contents line up with the page's content column rather
    than hugging the window edges, so the two never drift apart on a wide
@@ -549,8 +554,13 @@ button, input, textarea, select { font: inherit; color: inherit; }
 }
 
 .subject { overflow: hidden; }
-/* The colour band identifies the subject; the name always carries the meaning. */
-.subject__band { height: 3px; background: var(--subject-color, var(--accent)); }
+/* The colour band identifies the subject; the name always carries the
+   meaning. It sits just inside the card's pixel frame. */
+.subject__band {
+  height: 3px;
+  margin: calc(var(--cal-px) + 1px) calc(var(--cal-px) + 1px) 0;
+  background: var(--subject-color, var(--accent));
+}
 
 .subject__header {
   display: flex;
@@ -816,13 +826,16 @@ button, input, textarea, select { font: inherit; color: inherit; }
 
 .tcal { padding: 16px 16px 14px; }
 
-/* The task calendar and its day panel wear the same pixel frame as the
-   Streaks screen's panels: square, a pixel bitten out of each corner, 2px
-   of edge. The calendar's burns — coal on a seam, with flames licking off
-   its outline (BurningEdge). The panels are opaque, so the fire only shows
-   outside them. */
+/* The task calendar and its day panel, and the Tasks page's cards and
+   Needs attention list, wear the same pixel frame as the Streaks screen's
+   panels: square, a pixel bitten out of each corner, 2px of edge. The
+   calendar's frame burns, and so does every panel on the Tasks page — coal
+   on a seam, with flames licking off the outline (BurningEdge). The panels
+   are opaque, so the fire only shows outside them. */
 .cal-layout .tcal,
-.cal-layout .dpanel {
+.cal-layout .dpanel,
+.focus,
+.subject {
   --frame: var(--border-strong);
   --seam: transparent;
   border: 0;
@@ -832,7 +845,9 @@ button, input, textarea, select { font: inherit; color: inherit; }
     inset 0 0 0 var(--cal-px) var(--frame),
     inset 0 0 0 calc(var(--cal-px) + 1px) var(--seam);
 }
-.cal-layout .tcal { --frame: var(--coal-frame); --seam: var(--coal-seam); }
+.cal-layout .tcal,
+.focus,
+.subject { --frame: var(--coal-frame); --seam: var(--coal-seam); }
 .tcal__header {
   display: flex;
   align-items: center;

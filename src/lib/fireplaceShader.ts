@@ -14,7 +14,7 @@
  * Changes from the original: unused Shadertoy uniforms removed; `scale` added
  * so the fire's size in the viewport is independent of the canvas resolution;
  * `floorLine` added so the fire can sit above a fixed control on phones;
- * the noise is shared with the calendars' burning edge (EDGE below).
+ * the noise is shared with the panels' burning edges (EDGE below).
  */
 
 export const VERTEX_SHADER = `
@@ -131,29 +131,28 @@ vec2 noiseStackUV(vec3 pos, int octaves, float falloff, float diff) {
 `
 
 /**
- * A calendar's burning outline (BurningEdge.tsx), drawn with the hearth's
- * noise, colour ramp and spark orange. Needs NOISE and the time uniform.
+ * Burning panel outlines (BurningEdge.tsx) — a calendar's, or each of the
+ * Tasks page's panels — drawn with the hearth's noise, colour ramp and spark
+ * orange. Needs NOISE, the time uniform and MAX_EDGES defined.
  */
 const EDGE = `
-uniform vec4 edge; // the calendar's outline in canvas pixels: left, bottom, right, top (right < left: none)
+uniform vec4 edges[MAX_EDGES]; // each burning panel's outline in canvas pixels: left, bottom, right, top
+uniform int edgeCount;
 
-// --- A calendar's burning edge ----------------------------------------------
-// The calendar panel sits over the canvas, so anything drawn inside its
-// outline is hidden: only what burns outward shows, hugging its border.
-// Worked in canvas pixels, so it has the hearth's grain. A line of coals
-// runs all the way round; flames lick off it, low along the bottom,
-// climbing the sides and tallest along the top, and crawl slowly round the
-// edge; now and then a single-pixel ember lifts off and fades. Same noise,
-// same colour ramp, same spark orange as the hearth.
+// --- A panel's burning edge -------------------------------------------------
+// The panels sit over the canvas, so anything drawn inside an outline is
+// hidden: only what burns outward shows, hugging the border. Worked in
+// canvas pixels, so it has the hearth's grain. A line of coals runs all
+// the way round; flames lick off it, low along the bottom, climbing the
+// sides and tallest along the top, and crawl slowly round the edge; now
+// and then a single-pixel ember lifts off and fades. Same noise, same
+// colour ramp, same spark orange as the hearth.
 
-// Returns the fire's colour for a dark ground (rgb) and its heat (a).
-vec4 burningEdge(vec2 p) {
-  if (edge.z <= edge.x) return vec4(0.0);
-  vec2 outside = max(edge.xy - p, p - edge.zw);
-  if (outside.x < 0.0 && outside.y < 0.0) return vec4(0.0); // under the panel
-  float d = length(max(outside, 0.0));
-  if (d > 20.0) return vec4(0.0);
-
+// One outline's fire at p, which lies outside it at distance d (at most
+// 20): the colour for a dark ground (rgb) and the heat (a). The seed moves
+// this panel's flames along the noise, so neighbours never burn in step;
+// open (0 to 1) is how much room the flames have before another panel.
+vec4 burningEdge(vec2 p, vec4 edge, float d, float seed, float open) {
   // Where round the outline this is, clockwise from the top-left corner,
   // so tongues can travel along the edge and round its corners.
   vec2 c = clamp(p, edge.xy, edge.zw);
@@ -164,6 +163,7 @@ vec4 burningEdge(vec2 p) {
   else if (c.x >= edge.z) s = w + edge.w - c.y;
   else if (c.y <= edge.y) s = w + h + edge.z - c.x;
   else s = 2.0 * w + h + c.y - edge.y;
+  s += seed;
 
   // Fire climbs: 0 along the bottom edge, 1 along the top.
   float up = clamp((p.y - edge.y) / max(h, 1.0), 0.0, 1.0);
@@ -178,7 +178,7 @@ vec4 burningEdge(vec2 p) {
   float reach = mix(1.4, 9.0, up * up) * (0.35 + 1.3 * tongues);
   // Turbulence lengthens a lick or shrinks it to nothing, right down to the
   // edge, so the fire breaks into tongues instead of an even outline.
-  float lick = reach * max(0.0, 1.6 * churn * churn - 0.1);
+  float lick = reach * max(0.0, 1.6 * churn * churn - 0.1) * open;
   float flame = lick > 0.0 ? clamp(1.0 - d / lick, 0.0, 1.0) * (0.55 + 0.5 * churn) : 0.0;
   float heat = max(coals, flame);
   float h3 = heat * heat * heat;
@@ -189,7 +189,7 @@ vec4 burningEdge(vec2 p) {
   vec2 drift = p - vec2(away * 2.5 * time, 8.0 * time);
   vec2 cell = floor(drift / 5.0);
   float r = prng(cell + vec2(31.0, 7.0));
-  if (r < 0.035 && d > 1.5) {
+  if (r < 0.035 * open && d > 1.5) {
     vec2 spot = floor(vec2(fract(r * 91.7), fract(r * 57.3)) * 5.0);
     if (all(equal(floor(drift) - cell * 5.0, spot))) {
       fire = max(fire, (1.0 - d / 20.0) * 1.3 * vec3(1.0, 0.36, 0.07));
@@ -197,6 +197,35 @@ vec4 burningEdge(vec2 p) {
     }
   }
   return vec4(fire, heat);
+}
+
+// Every panel's fire at p. Under any panel nothing shows; elsewhere p takes
+// the fire of the panel it is nearest. In the narrow gap between two panels
+// the flames hold down to their coals, so each keeps a glowing outline while
+// the fire licks outward from the group rather than walling up between its
+// panels — and the seam where one panel's fire meets the next stays dark.
+// The loop only measures; the fire itself is worked out once.
+vec4 burningEdges(vec2 p) {
+  float near = 1e4;
+  float second = 1e4;
+  vec4 edge = vec4(0.0);
+  float seed = 0.0;
+  for (int i = 0; i < MAX_EDGES; i++) {
+    if (i >= edgeCount) break;
+    vec2 outside = max(edges[i].xy - p, p - edges[i].zw);
+    if (outside.x < 0.0 && outside.y < 0.0) return vec4(0.0);
+    float d = length(max(outside, 0.0));
+    if (d < near) {
+      second = near;
+      near = d;
+      edge = edges[i];
+      seed = 97.0 * float(i);
+    } else if (d < second) {
+      second = d;
+    }
+  }
+  if (near > 20.0) return vec4(0.0);
+  return burningEdge(p, edge, near, seed, smoothstep(2.0, 8.0, second));
 }
 `
 
@@ -284,14 +313,15 @@ void main() {
 `
 
 /**
- * The burning edge, drawn on a canvas that sits round a calendar and moves
- * with it: transparent everywhere but along the calendar's outline. On a dark page
- * the fire is light, as opaque as its brightest channel, so black adds
- * nothing. On a light page the white-hot end would vanish into the
+ * The burning edges, drawn on a canvas that sits behind the panels and moves
+ * with them: transparent everywhere but along their outlines, of which it
+ * draws up to `maxEdges`. On a dark page the fire is light, as opaque as its
+ * brightest channel, so black adds nothing. On a light page the white-hot end would vanish into the
  * background, so the ramp is held between red-orange and gold and heat
  * becomes opacity, as the click embers do (emberFire.ts).
  */
-export const EDGE_FRAGMENT_SHADER = `
+export const edgeFragmentShader = (maxEdges: number) => `
+#define MAX_EDGES ${maxEdges}
 precision highp float;
 
 uniform float time;
@@ -299,7 +329,7 @@ uniform float onLight;    // 1 on a light page, 0 on a dark one
 ${NOISE}
 ${EDGE}
 void main() {
-  vec4 fire = burningEdge(gl_FragCoord.xy);
+  vec4 fire = burningEdges(gl_FragCoord.xy);
   if (fire.a <= 0.01) {
     gl_FragColor = vec4(0.0);
     return;
