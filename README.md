@@ -46,6 +46,14 @@ A streak is continued on the day it happens — a missed day can't be filled
 in later, and a streak that ends says "Last streak 8 days · Start again"
 rather than anything harsher.
 
+On the Today panel a live run's count is drawn in the hearth's fire: digits
+banded like a pixel flame on a hard pixel shadow. A run kept today burns —
+it catches as the panel opens, flickers a few beats and sheds a few embers;
+one still owed today smoulders, and on its last grace day the coals run
+low. Continuing lands the new number white-hot with a fan of sparks; an
+undo lands it cold. It all moves for a few seconds and then rests, and an
+ended run's "Last streak" count stays plain.
+
 The calendar is a floor of pixel tiles with stepped corners, only as many
 rows as the month needs — four to six. This month's days are lit tiles; the
 previous month's last days, shown only where they put the 1st under its

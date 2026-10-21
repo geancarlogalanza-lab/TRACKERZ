@@ -10,10 +10,13 @@ interface RollingNumberProps {
  * A count that rolls to its new value: the old digit exits upward and the
  * new one enters from below, inside a mask one line tall. Going down (an
  * undo) reverses the direction and is quicker — it's a correction, not a
- * reward. With reduced motion on, the number simply changes.
+ * reward. With reduced motion on, the number simply changes. Once a roll
+ * lands, the settled number says which way it went (num__in--landed-up or
+ * --landed-down), so a screen can mark the landing.
  */
 export function RollingNumber({ value, long = false }: RollingNumberProps) {
   const [roll, setRoll] = useState<{ from: number; to: number } | null>(null)
+  const [landed, setLanded] = useState<'up' | 'down' | null>(null)
   const shown = useRef(value)
 
   useEffect(() => {
@@ -22,14 +25,17 @@ export function RollingNumber({ value, long = false }: RollingNumberProps) {
     shown.current = value
     setRoll({ from, to: value })
     // Outlasts the CSS delay plus duration, so the number settles after it lands.
-    const timer = setTimeout(() => setRoll(null), long ? 640 : 480)
+    const timer = setTimeout(() => {
+      setRoll(null)
+      setLanded(value > from ? 'up' : 'down')
+    }, long ? 640 : 480)
     return () => clearTimeout(timer)
   }, [value, long])
 
   if (!roll) {
     return (
       <span className="num">
-        <span className="num__in">{value}</span>
+        <span className={landed ? `num__in num__in--landed-${landed}` : 'num__in'}>{value}</span>
       </span>
     )
   }

@@ -3,6 +3,7 @@ import { Button } from '../ui/Button'
 import { CheckIcon } from '../ui/Icons'
 import { Menu } from '../ui/Menu'
 import { RollingNumber } from './RollingNumber'
+import { StreakCount } from './StreakCount'
 import { toMessage } from '../../lib/errors'
 import { LIMITS } from '../../lib/validation'
 import type { Streak, StreakRecord } from '../../data/types'
@@ -135,6 +136,9 @@ export function StreakRow({
       <div className="srow__side">
         {state === 'missed' ? (
           <span className="srow__quiet">Not continued</span>
+        ) : mode === 'today' && state !== 'restart' && count > 0 ? (
+          // Today's live runs burn; ended runs and past days stay plain.
+          <StreakCount count={count} state={state} lastDay={lastDay} celebrate={celebrate} />
         ) : (
           count > 0 && (
             <span className={`srow__count${state === 'restart' ? ' srow__count--last' : ''}`}>

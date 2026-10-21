@@ -1646,6 +1646,92 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .num__in--down { animation: num-down 0.2s ease-out both; }
 .num__in--long { animation-duration: 0.48s; }
 
+/* --- A live run's count on the Today panel (StreakCount.tsx) -------------
+
+   Drawn the way the hearth draws fire: digits banded like a pixel flame,
+   hottest at the top, on a hard two-pixel shadow. A run kept today burns —
+   bright, glowing, catching as the panel opens, flickering a few beats,
+   a few embers rising off it. One still owed today smoulders, its coals
+   breathing; on its last grace day they run low. A continue lands the new
+   number white-hot and cooling, with a fan of sparks; an undo lands it a
+   beat cold.
+
+   The number keeps its size and place; sparks and glow are drawn outside
+   the layout. Like the calendar, all of it is bounded — it moves for a few
+   seconds, then rests — because the hearth's loop would make anything
+   endless cost the main thread for as long as the screen is open. Reduced
+   motion stills it; the colours stay. */
+
+.scount {
+  --band-1: #ffe7ad;
+  --band-2: #ffcb74;
+  --band-3: #ff8a3c;
+  --band-4: #ec5f1f;
+}
+.scount--needs {
+  --band-1: #ffbb7a;
+  --band-2: #ff9a4a;
+  --band-3: #e96a26;
+  --band-4: #b8450f;
+}
+.scount--low {
+  --band-1: #f0985a;
+  --band-2: #dc6b2b;
+  --band-3: #b54916;
+  --band-4: #85300c;
+}
+.scount__digits { position: relative; display: flex; }
+.scount__glyphs { display: flex; filter: drop-shadow(0 var(--cal-px) 0 #3f1104); }
+.scount--done .scount__glyphs {
+  filter: drop-shadow(0 var(--cal-px) 0 #3f1104) drop-shadow(0 0 7px rgb(255 122 40 / 0.4));
+}
+/* One flame per line of digits: the bands repeat every 1em, so a rolling
+   number, two lines tall, burns the same as a still one. */
+.scount .num__in {
+  background: linear-gradient(var(--band-1) 0 34%, var(--band-2) 34% 52%, var(--band-3) 52% 70%, var(--band-4) 70%)
+    0 0 / 100% 1em repeat-y;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Catching, burning, smouldering — on the mask, which stays put while the
+   digits roll inside it, so none of it replays with a roll. */
+.scount--done .num { animation: scount-ignite 0.72s steps(1), scount-flicker 0.9s steps(1) 0.72s 3; }
+.scount--done.scount--moved .num { animation: scount-flicker 0.9s steps(1) 0.5s 3; }
+/* Breathing in a few stepped shades, like the pixel flame, rather than a
+   smooth fade: a smooth one repaints every count on every frame. */
+.scount--needs .num { animation: scount-smoulder 2.4s steps(3) 2; }
+.scount .num__in--landed-up { animation: scount-flare 0.66s steps(6); }
+.scount .num__in--landed-down { animation: scount-cool 0.4s steps(4); }
+
+/* Embers rise off a burning count three rounds when it comes into view; a
+   continue fans out all six as sparks first. Two-pixel motes, moving in
+   two-pixel hops. */
+.scount__sparks { position: absolute; inset: 0; pointer-events: none; }
+.scount__sparks i {
+  position: absolute;
+  top: 12%;
+  left: var(--x);
+  width: var(--cal-px);
+  height: var(--cal-px);
+  background: var(--cal-ember-hot);
+  opacity: 0;
+}
+/* --dx, --dy and --y0 aim each spark of a burst: they leave the digits at
+   different heights and arc out and up. */
+.scount__sparks i:nth-child(1) { --x: 16%; --drift: 2px; --t: 2s; --wait: 0s; --y0: 6px; --dx: -12px; --dy: -12px; }
+.scount__sparks i:nth-child(2) { --x: 64%; --drift: -2px; --t: 2.3s; --wait: 0.7s; --y0: 2px; --dx: 10px; --dy: -14px; background: var(--cal-ember); }
+.scount__sparks i:nth-child(3) { --x: 38%; --drift: 2px; --t: 2.1s; --wait: 1.4s; --y0: 10px; --dx: -4px; --dy: -14px; background: var(--cal-ember); }
+.scount__sparks i:nth-child(4) { --x: 84%; --drift: -2px; --t: 1.9s; --wait: 2s; --y0: 8px; --dx: 14px; --dy: -8px; }
+.scount__sparks i:nth-child(5) { --x: 28%; --y0: 12px; --dx: -16px; --dy: -4px; }
+.scount__sparks i:nth-child(6) { --x: 52%; --y0: 4px; --dx: 4px; --dy: -14px; background: var(--cal-ember); }
+.scount__sparks--rise i:nth-child(-n + 4) { animation: scount-ember var(--t) steps(6) var(--wait) 3; }
+.scount__sparks--burst i { animation: scount-spark 0.75s steps(8) 0.42s; }
+.scount__sparks--burst i:nth-child(-n + 4) {
+  animation: scount-spark 0.75s steps(8) 0.42s, scount-ember var(--t) steps(6) calc(1.4s + var(--wait)) 2;
+}
+
 /* ==========================================================================
    Hearth — the fireplace behind the Streak tracker
 
@@ -2029,6 +2115,39 @@ html:has(.app--streaks) { background: #0f1115; }
   100% { opacity: 0; transform: scale(1.22); }
 }
 @keyframes srow-sweep { to { transform: translateX(100%); } }
+@keyframes scount-ignite {
+  0% { filter: brightness(0.3); }
+  25% { filter: brightness(0.6); }
+  45% { filter: brightness(1.45); }
+  65% { filter: brightness(0.9); }
+  82% { filter: brightness(1.18); }
+  100% { filter: brightness(1); }
+}
+@keyframes scount-flicker {
+  0%, 100% { filter: brightness(1); }
+  30% { filter: brightness(1.14); }
+  55% { filter: brightness(0.92); }
+  80% { filter: brightness(1.07); }
+}
+@keyframes scount-smoulder { 50% { filter: brightness(0.74); } }
+@keyframes scount-flare {
+  0% { filter: brightness(2.2) saturate(0.35); }
+  100% { filter: brightness(1) saturate(1); }
+}
+@keyframes scount-cool {
+  0% { filter: brightness(0.55) saturate(0.2); }
+  100% { filter: brightness(1) saturate(1); }
+}
+@keyframes scount-ember {
+  0% { transform: translate(0, 0); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translate(var(--drift), -12px); opacity: 0; }
+}
+@keyframes scount-spark {
+  0% { transform: translate(0, var(--y0)); opacity: 1; }
+  60% { transform: translate(calc(0.7 * var(--dx)), var(--dy)); opacity: 1; }
+  100% { transform: translate(var(--dx), calc(var(--dy) + 4px)); opacity: 0; }
+}
 
 /* ==========================================================================
    Responsive — the mobile layout is arranged for thumbs, not just narrowed
